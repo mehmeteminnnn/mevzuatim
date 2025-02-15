@@ -17,19 +17,13 @@ class _HomeScreenState extends State<HomeScreen> {
           "MEVZUATIM",
           style: TextStyle(
             color: Color(0xFF64B6AC), // Mavi renk
-            fontSize: 22,
+            fontSize: 20, // Daha küçük font
             fontWeight: FontWeight.bold,
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        //centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
+        toolbarHeight: 40, // AppBar yüksekliği azaltıldı
       ),
       body: Column(
         children: [
@@ -40,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     _buildSearchAndProfile(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     _buildPost(),
                     _buildPost(),
                     _buildPost(),
@@ -69,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               children: [
                 const CircleAvatar(
-                  radius: 25,
+                  radius: 18,
                   backgroundImage: AssetImage('assets/profile.jpg'),
                 ),
                 const SizedBox(width: 10),
@@ -79,31 +73,33 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       "Mert Kaya",
                       style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                     Text(
                       "Mali Müşavir - Editör",
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: Colors.grey, fontSize: 10),
                     ),
                   ],
                 ),
                 const Spacer(),
-                const Text("19.12.2024", style: TextStyle(color: Colors.grey)),
+                const Text("19.12.2024",
+                    style: TextStyle(color: Colors.grey, fontSize: 10)),
               ],
             ),
             const SizedBox(height: 10),
             const Text(
               "Bugünkü habere göre; Aile ve Sosyal Hizmetler Bakanlığı tarafından yapılan açıklamada, 16 yaş altı çocukların sosyal medya kullanımı sınırlandırılacağı ve platformların bu konuda daha fazla sorumluluk alması gerektiği belirtildi.",
-              style: TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: 12),
             ),
             const SizedBox(height: 10),
             Row(
               children: [
-                Icon(Icons.mode_comment_outlined, color: Colors.blue.shade700),
+                Icon(Icons.mode_comment_outlined,
+                    color: Colors.blue.shade700, size: 16),
                 const SizedBox(width: 5),
                 Text(
                   "Yorum yap",
-                  style: TextStyle(color: Colors.blue.shade700),
+                  style: TextStyle(color: Colors.blue.shade700, fontSize: 10),
                 ),
                 const Spacer(),
                 GestureDetector(
@@ -119,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     "10 yorum",
                     style: TextStyle(
                       color: Colors.teal.shade700,
+                      fontSize: 10,
                       // decoration: TextDecoration.underline,
                     ),
                   ),
@@ -144,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: [
           const CircleAvatar(
-            radius: 22,
+            radius: 18,
             backgroundImage: AssetImage('assets/profile.jpg'),
           ),
           const SizedBox(width: 10),

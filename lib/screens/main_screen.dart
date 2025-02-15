@@ -3,6 +3,8 @@ import 'package:mevzuatim/screens/home_screen.dart';
 //import 'mevzuat_screen.dart';
 //import 'gtip_screen.dart';
 import 'profile_screen.dart';
+import 'package:mevzuatim/screens/mevzuat_search_screen.dart';
+import 'package:mevzuatim/screens/gtip_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,8 +18,8 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     HomeScreen(),
-    //const MevzuatScreen(),
-    //const GtipScreen(),
+    MevzuatScreen(),
+    GtipScreen(),
     const ProfileScreen(),
   ];
 
