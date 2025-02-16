@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "206020123421",
+    "project_id": "denizproje-a9b67",
+    "storage_bucket": "denizproje-a9b67.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:206020123421:android:871196a5acfba23e2a9ff4",
+        "android_client_info": {
+          "package_name": "com.example.mevzuatim"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "206020123421-0gar6a6a0edt96c6l7k8gu1mn5dh52a6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDR9Z3s_ZBVeoeVrt3GYNwt4H7w-cRMwMg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "206020123421-0gar6a6a0edt96c6l7k8gu1mn5dh52a6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

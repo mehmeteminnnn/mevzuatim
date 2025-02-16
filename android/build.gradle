@@ -1,6 +1,17 @@
+buildscript {
+    repositories {
+        google()  // Firebase ve Google servisleri için gerekli repo
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.0.0'  // Android Gradle plugin
+        classpath 'com.google.gms:google-services:4.3.15'  // Firebase google services plugin
+    }
+}
+
 allprojects {
     repositories {
-        google()
+        google()  // Firebase ve Google servisleri için gerekli repo
         mavenCentral()
     }
 }
@@ -13,6 +24,7 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Clean task to remove build directories
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

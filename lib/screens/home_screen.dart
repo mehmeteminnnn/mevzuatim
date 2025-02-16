@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mevzuatim/screens/post_detail_screen.dart';
+import 'package:mevzuatim/services/firestore_service.dart';
+import 'package:mevzuatim/models/blog_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -9,6 +11,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final FirestoreService _firestoreService = FirestoreService();
+  List<BlogModel> _blogs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBlogs(); // Blogları yükle
+  }
+
+  Future<void> _loadBlogs() async {
+    try {
+      List<BlogModel> blogs =
+          await _firestoreService.getBlogsByManset("Düşünceleriniz");
+      setState(() {
+        _blogs = blogs; // Veriler alındığında state'i güncelle
+      });
+    } catch (e) {
+      // Hata durumunda kullanıcıya mesaj gösterebilirsiniz
+      print("Bloglar alınamadı: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,22 +59,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     _buildSearchAndProfile(),
                     const SizedBox(height: 10),
-                    _buildPost(),
-                    _buildPost(),
-                    _buildPost(),
+                    // Bloglar yüklenene kadar CircularProgressIndicator göster
+                    if (_blogs.isEmpty) const CircularProgressIndicator(),
+                    // Bloglar geldiğinde postları göster
+                    ..._blogs.map((blog) => _buildPost(blog)).toList(),
                   ],
                 ),
               ),
             ),
           ),
-          // Arama ve Profil Alanı
         ],
       ),
     );
   }
 
   /// Postları oluşturan widget
-  Widget _buildPost() {
+  Widget _buildPost(BlogModel blog) {
     return Card(
       color: Colors.white,
       elevation: 0,
@@ -69,26 +93,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
-                      "Mert Kaya",
+                      blog.yazar, // Bunu dinamik yapabilirsiniz
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                     Text(
-                      "Mali Müşavir - Editör",
+                      "Mali Müşavir - Editör", // Bunu dinamik yapabilirsiniz
                       style: TextStyle(color: Colors.grey, fontSize: 10),
                     ),
                   ],
                 ),
                 const Spacer(),
-                const Text("19.12.2024",
-                    style: TextStyle(color: Colors.grey, fontSize: 10)),
+                Text(
+                  // Tarihi dinamik olarak al
+                  blog.tarih.toLocal().toString().substring(0, 10),
+                  style: TextStyle(color: Colors.grey, fontSize: 10),
+                ),
               ],
             ),
             const SizedBox(height: 10),
-            const Text(
-              "Bugünkü habere göre; Aile ve Sosyal Hizmetler Bakanlığı tarafından yapılan açıklamada, 16 yaş altı çocukların sosyal medya kullanımı sınırlandırılacağı ve platformların bu konuda daha fazla sorumluluk alması gerektiği belirtildi.",
+            Text(
+              blog.ozet, // Dinamik içerik
               style: TextStyle(fontSize: 12),
             ),
             const SizedBox(height: 10),
@@ -112,11 +139,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                   child: Text(
-                    "10 yorum",
+                    "10 yorum", // Yorum sayısını dinamik yapabilirsiniz
                     style: TextStyle(
                       color: Colors.teal.shade700,
                       fontSize: 10,
-                      // decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
@@ -141,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: [
           const CircleAvatar(
-            radius: 18,
+            radius: 18, // Yüksekliği azaltmak için radius değerini küçülttüm
             backgroundImage: AssetImage('assets/profile.jpg'),
           ),
           const SizedBox(width: 10),
@@ -152,14 +178,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 filled: true,
                 fillColor: Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 4, // Daha küçük bir padding değeri
+                  horizontal:
+                      10, // Horizontal padding de eklenerek hizalama sağlandı
+                ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
-          ),
+          )
         ],
       ),
     );

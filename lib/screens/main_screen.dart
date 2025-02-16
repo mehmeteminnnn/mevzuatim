@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mevzuatim/screens/deneme.dart';
 import 'package:mevzuatim/screens/home_screen.dart';
 //import 'mevzuat_screen.dart';
 //import 'gtip_screen.dart';
@@ -20,7 +21,8 @@ class _MainScreenState extends State<MainScreen> {
     HomeScreen(),
     MevzuatScreen(),
     GtipScreen(),
-    const ProfileScreen(),
+    ProfileScreen(),
+    BlogScreen()
   ];
 
   @override
@@ -51,6 +53,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profilim',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_search_rounded),
+            label: 'Deneme',
           ),
         ],
       ),
