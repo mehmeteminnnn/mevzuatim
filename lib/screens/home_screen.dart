@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mevzuatim/screens/post_detail_screen.dart';
 import 'package:mevzuatim/services/firestore_service.dart';
 import 'package:mevzuatim/models/blog_model.dart';
+//import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadBlogs(); // Blogları yükle
+    _loadBlogs();
   }
 
   Future<void> _loadBlogs() async {
@@ -25,10 +26,9 @@ class _HomeScreenState extends State<HomeScreen> {
       List<BlogModel> blogs =
           await _firestoreService.getBlogsByManset("Düşünceleriniz");
       setState(() {
-        _blogs = blogs; // Veriler alındığında state'i güncelle
+        _blogs = blogs;
       });
     } catch (e) {
-      // Hata durumunda kullanıcıya mesaj gösterebilirsiniz
       print("Bloglar alınamadı: $e");
     }
   }
@@ -36,18 +36,19 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "MEVZUATIM",
           style: TextStyle(
-            color: Color(0xFF64B6AC), // Mavi renk
-            fontSize: 20, // Daha küçük font
+            color: Color(0xFF64B6AC),
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        toolbarHeight: 40, // AppBar yüksekliği azaltıldı
+        toolbarHeight: 40,
       ),
       body: Column(
         children: [
@@ -59,9 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     _buildSearchAndProfile(),
                     const SizedBox(height: 10),
-                    // Bloglar yüklenene kadar CircularProgressIndicator göster
                     if (_blogs.isEmpty) const CircularProgressIndicator(),
-                    // Bloglar geldiğinde postları göster
                     ..._blogs.map((blog) => _buildPost(blog)).toList(),
                   ],
                 ),
@@ -73,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Postları oluşturan widget
   Widget _buildPost(BlogModel blog) {
     return Card(
       color: Colors.white,
@@ -94,29 +92,62 @@ class _HomeScreenState extends State<HomeScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      blog.yazar, // Bunu dinamik yapabilirsiniz
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    // Kullanıcı adını alıyoruz
+                    FutureBuilder<String?>(
+                      future:
+                          _firestoreService.getUserNameFromEmail(blog.yazar),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircularProgressIndicator(); // Yükleniyor göstergesi
+                        } else if (snapshot.hasError) {
+                          return Text('Hata: ${snapshot.error}');
+                        } else if (!snapshot.hasData || snapshot.data == null) {
+                          return const Text('Kullanıcı adı bulunamadı');
+                        } else {
+                          return Text(
+                            snapshot
+                                .data!, // Burada snapshot.data ile kullanıcı adını alıyoruz
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 12),
+                          );
+                        }
+                      },
                     ),
-                    Text(
-                      "Mali Müşavir - Editör", // Bunu dinamik yapabilirsiniz
-                      style: TextStyle(color: Colors.grey, fontSize: 10),
+                    // Yetki bilgisini alıyoruz
+                    FutureBuilder<String?>(
+                      future: _firestoreService.getUserRoleFromEmail(
+                          blog.yazar), // Kullanıcının yetkisini alıyoruz
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircularProgressIndicator(); // Yükleniyor göstergesi
+                        } else if (snapshot.hasError) {
+                          return Text('Hata: ${snapshot.error}');
+                        } else if (!snapshot.hasData || snapshot.data == null) {
+                          return const Text('Yetki bilgisi bulunamadı');
+                        } else {
+                          return Text(
+                            snapshot
+                                .data!, // Burada snapshot.data ile kullanıcının yetkisini alıyoruz
+                            style: const TextStyle(
+                                color: Colors.grey, fontSize: 10),
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),
                 const Spacer(),
                 Text(
-                  // Tarihi dinamik olarak al
                   blog.tarih.toLocal().toString().substring(0, 10),
-                  style: TextStyle(color: Colors.grey, fontSize: 10),
+                  style: const TextStyle(color: Colors.grey, fontSize: 10),
                 ),
               ],
             ),
             const SizedBox(height: 10),
             Text(
-              blog.ozet, // Dinamik içerik
-              style: TextStyle(fontSize: 12),
+              blog.icerik, // HTML içeriği işleniyor
             ),
             const SizedBox(height: 10),
             Row(
@@ -139,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                   child: Text(
-                    "10 yorum", // Yorum sayısını dinamik yapabilirsiniz
+                    "10 yorum",
                     style: TextStyle(
                       color: Colors.teal.shade700,
                       fontSize: 10,
@@ -154,10 +185,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Sayfanın altına arama ve profil ekleyen widget
   Widget _buildSearchAndProfile() {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -167,29 +197,30 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: [
           const CircleAvatar(
-            radius: 18, // Yüksekliği azaltmak için radius değerini küçülttüm
+            radius: 16,
             backgroundImage: AssetImage('assets/profile.jpg'),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Arama Yap",
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                filled: true,
-                fillColor: Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 4, // Daha küçük bir padding değeri
-                  horizontal:
-                      10, // Horizontal padding de eklenerek hizalama sağlandı
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
+            child: SizedBox(
+              height: 30,
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: "Arama Yap",
+                  hintStyle: const TextStyle(fontSize: 14),
+                  prefixIcon:
+                      const Icon(Icons.search, color: Colors.grey, size: 18),
+                  filled: true,
+                  fillColor: Colors.grey.shade200,
+                  contentPadding: EdgeInsets.zero,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );

@@ -1,24 +1,42 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Kullanıcı giriş yapma fonksiyonu
-  Future<User?> signInWithEmail(String email, String password) async {
+  // Kullanıcı giriş fonksiyonu
+  Future<bool> loginUser(
+      String email, String password, BuildContext context) async {
     try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return userCredential.user;
-    } catch (e) {
-      print("Giriş hatası: $e");
-      return null;
-    }
-  }
+      var querySnapshot = await _firestore
+          .collection('kullanıcılar')
+          .where('mail', isEqualTo: email)
+          .limit(1)
+          .get();
 
-  // Çıkış yapma fonksiyonu
-  Future<void> signOut() async {
-    await _auth.signOut();
+      if (querySnapshot.docs.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('E-posta adresi bulunamadı!')),
+        );
+        return false;
+      }
+
+      var userDoc = querySnapshot.docs.first;
+      String storedPassword = userDoc['parola'];
+
+      if (password == storedPassword) {
+        return true; // Giriş başarılı
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Şifre yanlış!')),
+        );
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bir hata oluştu: $e')),
+      );
+      return false;
+    }
   }
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/auth_service.dart'; // AuthService'i içe aktar
 import 'package:mevzuatim/screens/main_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mevzuatim/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -12,7 +13,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscureText = true;
-  final AuthService _authService = AuthService();
 
   void _loginUser() async {
     String email = _emailController.text.trim();
@@ -25,14 +25,11 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    User? user = await _authService.signInWithEmail(email, password);
-    if (user != null) {
-      // Başarıyla giriş yaptı
+    bool success = await AuthService().loginUser(email, password, context);
+    if (success) {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => MainScreen()));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Giriş başarısız, bilgilerinizi kontrol edin!')),
+        context,
+        MaterialPageRoute(builder: (context) => MainScreen()),
       );
     }
   }
