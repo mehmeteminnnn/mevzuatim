@@ -1,6 +1,7 @@
-import 'dart:convert';
+import 'dart:convert'; // UTF-8 desteği için eklendi
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:http/http.dart' as http;
 
 class TestWebViewPage extends StatefulWidget {
   @override
@@ -9,100 +10,58 @@ class TestWebViewPage extends StatefulWidget {
 
 class _TestWebViewPageState extends State<TestWebViewPage> {
   late WebViewController _controller;
+  String? htmlContent;
+  final String url =
+      "https://firebasestorage.googleapis.com/v0/b/denizproje-a9b67.appspot.com/o/Dosyalar%2FDahilde%20%C4%B0%C5%9Fleme%20Rejimi%2FDahilde%20i%C5%9Fleme%20D1%20D2%20D3%20D4%20D5%20kodlar%C4%B1.docx?alt=media&token=ac7c1db9-1e47-45cb-9cbd-e855cb673447";
 
   @override
   void initState() {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted);
-    _loadHtmlContent();
+    fetchHtml();
+  }
+
+  Future<void> fetchHtml() async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        setState(() {
+          htmlContent = utf8.decode(response.bodyBytes); // UTF-8 olarak çözüldü
+          _loadHtmlContent(); // HTML içeriğini yükle
+        });
+      } else {
+        setState(() {
+          htmlContent = "<h2>Hata: ${response.statusCode}</h2>";
+          _loadHtmlContent();
+        });
+      }
+    } catch (e) {
+      setState(() {
+        htmlContent = "<h2>Bağlantı hatası: $e</h2>";
+        _loadHtmlContent();
+      });
+    }
   }
 
   void _loadHtmlContent() {
-    final htmlContent = """
-      <html>
-        <head><meta charset="UTF-8"></head>
-        <body>
-          <table>
-            <tr>
-              <td>
-                <table>
-                  <tr>
-                    <td><p>31 Aralık 2020 PERŞEMBE</p></td>
-                    <td><p><strong>Resmî Gazete</strong></p></td>
-                    <td><p>Sayısı : 31351</p></td>
-                  </tr>
-                  <tr>
-                    <td colspan="3"><p><strong>TEBLİĞ</strong></p></td>
-                  </tr>
-                  <tr>
-                    <td colspan="3"><p><strong>&nbsp;</strong></p></td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-          <p>&nbsp;</p>
-          <p>Ticaret Bakanlığından:</p>
-          <p><strong>AVRUPA BİRLİĞİ MENŞELİ BAZI TARIM ÜRÜNLERİ İTHALATINDA</strong></p>
-          <p><strong>TARİFE KONTENJANI UYGULANMASINA İLİŞKİN TEBLİĞDE</strong></p>
-          <p><strong>DEĞİŞİKLİK YAPILMASINA DAİR TEBLİĞ</strong></p>
-          <p><strong>&nbsp;</strong></p>
-          <p><strong>MADDE 1 –</strong> 7/7/2018 tarihli ve 30471 mükerrer sayılı Resmî Gazete’de yayımlanan Avrupa Birliği Menşeli Bazı Tarım Ürünleri İthalatında Tarife Kontenjanı Uygulanmasıyla İlgili Tebliğin Ek-1’inde yer alan Avrupa Birliği Menşeli Bazı Tarım Ürünleri İthalatında Uygulanan Tarife Kontenjanları Listesinde bulunan AB040 kod numaralı tarife kontenjanı satırı aşağıdaki şekilde değiştirilmiş ve aynı Listenin sonuna aşağıdaki dipnot eklenmiştir.</p>
-          <p>“</p>
-          <table>
-            <tr>
-              <td rowspan="2"><p>AB040<sup>(3)</sup></p></td>
-              <td><p>1207.70.00.00.00</p></td>
-              <td><p>Kavun, Karpuz tohumu</p></td>
-              <td rowspan="2"><p>01.01-31.12</p></td>
-              <td rowspan="2"><p>&nbsp;</p></td>
-              <td rowspan="2"><p>BSGTY</p></td>
-              <td rowspan="2"><p>&nbsp;</p></td>
-            </tr>
-            <tr>
-              <td><p>12.09</p><p>(1209.10.00.00.00 hariç)</p></td>
-              <td><p>Ekim amacıyla kullanılan tohum, meyve ve sporlar</p></td>
-            </tr>
-          </table>
-          <p>“(3) Tarife kontenjanı miktarı eşit dilimler halinde çeyrek dönemler itibarıyla tahsis edilir.”</p>
-          <p><strong>MADDE 2 –</strong> Bu Tebliğ 1/1/2021 tarihinde yürürlüğe girer.</p>
-          <p><strong>MADDE 3 –</strong> Bu Tebliğ hükümlerini Ticaret Bakanı yürütür.</p>
-          <table>
-            <tr>
-              <td colspan="3"><p><strong>Tebliğin Yayımlandığı Resmî Gazete'nin</strong></p></td>
-            </tr>
-            <tr>
-              <td colspan="2"><p><strong>Tarihi</strong></p></td>
-              <td><p><strong>Sayı</strong></p></td>
-            </tr>
-            <tr>
-              <td colspan="2"><p>7/7/2018</p></td>
-              <td><p>30471</p></td>
-            </tr>
-            <tr>
-              <td colspan="3"><p><strong>Tebliğde Değişiklik Yapan Tebliğlerin Yayınlandığı Resmî Gazete'nin</strong></p></td>
-            </tr>
-            <tr>
-              <td colspan="2"><p><strong>Tarihi</strong></p></td>
-              <td><p><strong>Sayı</strong></p></td>
-            </tr>
-            <tr>
-              <td><p>1-</p></td>
-              <td><p>19/10/2018</p></td>
-              <td><p>30570</p></td>
-            </tr>
-            <tr>
-              <td><p>2-</p></td>
-              <td><p>17/11/2018</p></td>
-              <td><p>30598</p></td>
-            </tr>
-          </table>
-        </body>
-      </html>
-    """;
-
-    _controller.loadHtmlString(htmlContent);
+    if (htmlContent != null) {
+      final htmlPage = """
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; padding: 10px; }
+            </style>
+          </head>
+          <body>
+            
+            <div>$htmlContent</div>
+          </body>
+        </html>
+      """;
+      _controller.loadHtmlString(htmlPage);
+    }
   }
 
   @override

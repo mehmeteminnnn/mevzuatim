@@ -29,15 +29,6 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
     }
   }
 
-  String getStoragePath(String filePath) {
-    filePath = filePath.replaceAll(r'\', '/');
-    int startIndex = filePath.indexOf("Mevzuatim/");
-    if (startIndex == -1) {
-      throw Exception("Dosya yolu geçersiz: 'Mevzuatim/' bulunamadı.");
-    }
-    return filePath.substring(startIndex + "Mevzuatim/".length);
-  }
-
   String formatFileName(String path) {
     String fileName = path.split('\\').last;
     if (fileName.endsWith('.docx')) {
@@ -187,16 +178,15 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
                                     color: Color(0xFF64B6AC),
                                   ),
                                   onTap: () {
-                                    debugPrint(extractFilePath(item["baslik  "]));
-                                       
-                                    StorageService().pathToUrl(
-                                        extractFilePath(item["baslik  "]));
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => WordEkrani(
-                                          docxUrl:
-                                              getStoragePath(item["baslik  "]),
+                                        builder: (context) => WebViewPage(
+                                          url: StorageService().pathToUrl(
+                                              extractFilePath(
+                                                  item["baslik  "])),
+                                          title:
+                                              formatFileName(item["baslik  "]),
                                         ),
                                       ),
                                     );

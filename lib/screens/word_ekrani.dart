@@ -1,63 +1,84 @@
-import 'dart:io';
+import 'dart:convert'; // UTF-8 desteği için eklendi
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
-import 'package:docx_template/docx_template.dart';
 
-class WordEkrani extends StatefulWidget {
-  final String docxUrl; // Firebase Storage veya internetten gelen docx URL'si
+class WebViewPage extends StatefulWidget {
+  final String url;
+  final String title;
 
-  WordEkrani({required this.docxUrl});
+  const WebViewPage({Key? key, required this.url, required this.title})
+      : super(key: key);
 
   @override
-  _WordEkraniState createState() => _WordEkraniState();
+  _WebViewPageState createState() => _WebViewPageState();
 }
 
-class _WordEkraniState extends State<WordEkrani> {
-  late final WebViewController _controller;
-  String _htmlContent = "<p>Yükleniyor...</p>";
+class _WebViewPageState extends State<WebViewPage> {
+  late WebViewController _controller;
+  String? htmlContent;
 
   @override
   void initState() {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted);
-    _loadDocxFromUrl(widget.docxUrl);
+    fetchHtml();
   }
 
-  Future<void> _loadDocxFromUrl(String url) async {
+  Future<void> fetchHtml() async {
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(Uri.parse(widget.url));
       if (response.statusCode == 200) {
-        final tempDir = await getTemporaryDirectory();
-        final tempFile = File('${tempDir.path}/temp.docx');
-        await tempFile.writeAsBytes(response.bodyBytes);
-
-        final docx = await DocxTemplate.fromBytes(await tempFile.readAsBytes());
-
-        //final docx = await DocxTemplate.fromFile(tempFile);
-        final docxText = docx.toString(); // DOCX içeriğini al
-
         setState(() {
-          _htmlContent = "<p>${docxText.replaceAll("\n", "<br>")}</p>";
+          htmlContent = utf8.decode(response.bodyBytes); // UTF-8 olarak çözüldü
+          _loadHtmlContent(); // HTML içeriğini yükle
         });
-
-        _controller.loadHtmlString(_htmlContent);
       } else {
-        throw Exception("Dosya yüklenemedi");
+        setState(() {
+          htmlContent = "<h2>Hata: ${response.statusCode}</h2>";
+          _loadHtmlContent();
+        });
       }
     } catch (e) {
       setState(() {
-        _htmlContent = "<p>Hata: ${e.toString()}</p>";
+        htmlContent = "<h2>Bağlantı hatası: $e</h2>";
+        _loadHtmlContent();
       });
+    }
+  }
+
+  void _loadHtmlContent() {
+    if (htmlContent != null) {
+      final htmlPage = """
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; padding: 10px; }
+            </style>
+          </head>
+          <body>
+            <div>$htmlContent</div>
+          </body>
+        </html>
+      """;
+      _controller.loadHtmlString(htmlPage);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Word İçeriği")),
+      appBar: AppBar(
+        title: Text(
+          widget.title, // Sayfa başlığı parametre olarak alındı
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true, // Başlığı ortala
+        backgroundColor: Colors.white, // Arka plan rengi
+        elevation: 4, // Hafif gölge efekti
+      ),
       body: WebViewWidget(controller: _controller),
     );
   }
