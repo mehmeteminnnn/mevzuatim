@@ -2,6 +2,8 @@ import 'package:algolia/algolia.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mevzuatim/models/blog_model.dart';
+import 'package:mevzuatim/screens/deneme2.dart';
+import 'package:mevzuatim/screens/deneme3.dart';
 import 'package:mevzuatim/services/algolia_service.dart';
 import 'package:mevzuatim/services/firestore_service.dart';
 
@@ -42,7 +44,12 @@ class _BlogScreenState extends State<BlogScreen> {
       body: Column(
         children: [
           ElevatedButton(
-            onPressed: _performSearch,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TestWebViewPage()),
+              );
+            },
             child: Text('Deneme'),
           ),
           Expanded(

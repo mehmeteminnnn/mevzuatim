@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mevzuatim/services/algolia_service.dart';
+import 'package:mevzuatim/screens/word_ekrani.dart'; // WordEkrani sayfasını import ettim
+import 'package:mevzuatim/services/storage_service.dart';
 
 class MevzuatScreen extends StatefulWidget {
   @override
@@ -13,33 +15,34 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
   String _searchType = "Başlığa Göre Ara"; // Varsayılan arama türü
   bool _isLoading = false; // Yükleniyor durumu
 
+  String extractFilePath(String fullPath) {
+    // 'Mevzuatim' kelimesinin bulunduğu index'i buluyoruz
+    final startIndex = fullPath.indexOf('Mevzuatim\\');
 
-
-  String getStoragePath(String filePath) {
-  // Windows için ters eğik çizgi (\) yerine düz eğik çizgi (/) kullan
-  filePath = filePath.replaceAll(r'\', '/');
-
-  // "Mevzuatim/" kelimesinin başlangıç indeksini bul
-  int startIndex = filePath.indexOf("Mevzuatim/");
-  if (startIndex == -1) {
-    throw Exception("Dosya yolu geçersiz: 'Mevzuatim/' bulunamadı.");
+    // Eğer 'Mevzuatim' bulunursa, sonrasını döndür
+    if (startIndex != -1) {
+      // 'Mevzuatim\' kısmının hemen sonrasını almak için startIndex + 'Mevzuatim'.length' kadar ilerliyoruz
+      return fullPath.substring(startIndex + 'Mevzuatim\\'.length);
+    } else {
+      // Eğer 'Mevzuatim' bulunmazsa, boş bir değer döndürüyoruz
+      return '';
+    }
   }
 
-  // "Mevzuatim/" kısmından sonrasını al
-  String storagePath = filePath.substring(startIndex + "Mevzuatim/".length);
-
-  return storagePath;
-}
+  String getStoragePath(String filePath) {
+    filePath = filePath.replaceAll(r'\', '/');
+    int startIndex = filePath.indexOf("Mevzuatim/");
+    if (startIndex == -1) {
+      throw Exception("Dosya yolu geçersiz: 'Mevzuatim/' bulunamadı.");
+    }
+    return filePath.substring(startIndex + "Mevzuatim/".length);
+  }
 
   String formatFileName(String path) {
-    // Son \ işaretinin olduğu yerden başlayarak al
     String fileName = path.split('\\').last;
-
-    // .docx uzantısını kaldır
     if (fileName.endsWith('.docx')) {
       fileName = fileName.substring(0, fileName.length - 5);
     }
-
     return fileName;
   }
 
@@ -52,7 +55,7 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
     }
 
     setState(() {
-      _isLoading = true; // Yükleniyor başlat
+      _isLoading = true;
     });
 
     List<Map<String, dynamic>> results = [];
@@ -66,12 +69,12 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
           await _algoliaService.searchByTitle(_searchController.text);
       final contentResults =
           await _algoliaService.searchByContent(_searchController.text);
-      results = [...titleResults, ...contentResults]; // İki sonucu birleştir
+      results = [...titleResults, ...contentResults];
     }
 
     setState(() {
       _searchResults = results;
-      _isLoading = false; // Yükleniyor bitti
+      _isLoading = false;
     });
   }
 
@@ -97,7 +100,6 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Arama türü seçme dropdown
             Container(
               padding: EdgeInsets.symmetric(horizontal: 8.0),
               decoration: BoxDecoration(
@@ -118,7 +120,7 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
                   setState(() {
                     _searchType = value!;
                   });
-                  _onSearchChanged(); // Arama türü değiştiğinde arama yapılacak
+                  _onSearchChanged();
                 },
                 decoration: InputDecoration(
                   border: InputBorder.none,
@@ -126,7 +128,6 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
               ),
             ),
             SizedBox(height: 8),
-            // Arama kutusu
             TextField(
               controller: _searchController,
               onChanged: (text) => _onSearchChanged(),
@@ -146,7 +147,6 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
               ),
             ),
             SizedBox(height: 16),
-            // Yükleniyor animasyonu veya Arama sonuçları
             _isLoading
                 ? Center(child: CircularProgressIndicator())
                 : Expanded(
@@ -186,25 +186,27 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
                                     size: 18,
                                     color: Color(0xFF64B6AC),
                                   ),
+                                  onTap: () {
+                                    debugPrint(extractFilePath(item["baslik  "]));
+                                       
+                                    StorageService().pathToUrl(
+                                        extractFilePath(item["baslik  "]));
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => WordEkrani(
+                                          docxUrl:
+                                              getStoragePath(item["baslik  "]),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               );
                             },
                           ),
                   ),
             SizedBox(height: 8),
-            // Klasör seçenekleri button at the bottom
-            /* ElevatedButton.icon(
-              onPressed: () {},
-              icon: Icon(Icons.folder, color: Colors.white),
-              label: Text("Klasör Seçenekleri"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF64B6AC),
-                padding: EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),*/
           ],
         ),
       ),

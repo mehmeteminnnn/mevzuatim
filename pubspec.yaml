@@ -41,6 +41,10 @@ dependencies:
   algolia: ^1.1.2
   algolia_helper_flutter: ^1.2.0
   firebase_storage: ^12.4.3
+  flutter_inappwebview: ^6.1.5
+  path_provider: ^2.1.5
+  webview_flutter: ^4.10.0
+  docx_template: ^0.4.0
 
 dev_dependencies:
   flutter_test:
