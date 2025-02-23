@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mevzuatim/screens/main_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mevzuatim/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {

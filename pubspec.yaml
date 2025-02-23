@@ -37,6 +37,10 @@ dependencies:
   cloud_firestore: ^5.6.3
   firebase_core: ^3.11.0
   firebase_auth: ^5.4.2
+  flutter_widget_from_html: ^0.16.0
+  algolia: ^1.1.2
+  algolia_helper_flutter: ^1.2.0
+  firebase_storage: ^12.4.3
 
 dev_dependencies:
   flutter_test:

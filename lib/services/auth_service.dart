@@ -1,42 +1,36 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AuthService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Kullanıcı giriş fonksiyonu
-  Future<bool> loginUser(
-      String email, String password, BuildContext context) async {
+  // Kullanıcı girişi
+  Future<bool> loginUser(String email, String password, BuildContext context) async {
     try {
-      var querySnapshot = await _firestore
-          .collection('kullanıcılar')
-          .where('mail', isEqualTo: email)
-          .limit(1)
-          .get();
-
-      if (querySnapshot.docs.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('E-posta adresi bulunamadı!')),
-        );
-        return false;
-      }
-
-      var userDoc = querySnapshot.docs.first;
-      String storedPassword = userDoc['parola'];
-
-      if (password == storedPassword) {
-        return true; // Giriş başarılı
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Şifre yanlış!')),
-        );
-        return false;
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bir hata oluştu: $e')),
+      await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
       );
+      return true;
+    } on FirebaseAuthException catch (e) {
+      String message = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+      if (e.code == 'user-not-found') {
+        message = 'Kullanıcı bulunamadı!';
+      } else if (e.code == 'wrong-password') {
+        message = 'Yanlış şifre!';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       return false;
     }
+  }
+
+  // Çıkış yapma
+  Future<void> logoutUser() async {
+    await _auth.signOut();
+  }
+
+  // Kullanıcı bilgilerini al
+  User? getCurrentUser() {
+    return _auth.currentUser;
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mevzuatim/screens/post_detail_screen.dart';
 import 'package:mevzuatim/services/firestore_service.dart';
 import 'package:mevzuatim/models/blog_model.dart';
-//import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -146,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            Text(
+            HtmlWidget(
               blog.icerik, // HTML içeriği işleniyor
             ),
             const SizedBox(height: 10),
