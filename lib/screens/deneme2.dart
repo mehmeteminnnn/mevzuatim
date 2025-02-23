@@ -15,8 +15,7 @@ class _WordWebViewTestState extends State<WordWebViewTest> {
   late WebViewController _controller;
   String _htmlContent = "<p>Yükleniyor...</p>";
 
-  final String docxUrl =
-      "https://firebasestorage.googleapis.com/v0/b/denizproje-a9b67.appspot.com/o/Yeni%20klas%C3%B6r%2FAvrupa%20Birli%C4%9Fi%20Men%C5%9Feli%20Baz%C4%B1%20Tar%C4%B1m%20%C3%9Cr%C3%BCnleri%20%C4%B0thalat%C4%B1nda%20Tarife%20Kontenjan%C4%B1%20Uygulanmas%C4%B1na%20%C4%B0li%C5%9Fkin%20Tebli%C4%9Fde%20De%C4%9Fi%C5%9Fiklik%20Yap%C4%B1lmas%C4%B1na%20Dair%20Tebli%C4%9F_2020.12.31.docx?alt=media&token=b46a1951-0239-46d5-a053-fd0afd760e22";
+  final String docxUrl="";
 
   @override
   void initState() {

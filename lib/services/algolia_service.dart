@@ -25,7 +25,7 @@ class AlgoliaService {
 
       final results = await index
           .query(query)
-          .setHitsPerPage(25) // En fazla 25 sonuç getir
+          .setHitsPerPage(40) // En fazla 25 sonuç getir
           .getObjects();
 
       // Bağlantı başarılıysa bu mesajı yazdır

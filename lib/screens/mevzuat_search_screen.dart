@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mevzuatim/services/algolia_service.dart';
 import 'package:mevzuatim/screens/word_ekrani.dart'; // WordEkrani sayfasını import ettim
 import 'package:mevzuatim/services/storage_service.dart';
+import 'package:mevzuatim/utils/file_utils.dart';
 
 class MevzuatScreen extends StatefulWidget {
   @override
@@ -14,28 +15,6 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
   List<Map<String, dynamic>> _searchResults = [];
   String _searchType = "Başlığa Göre Ara"; // Varsayılan arama türü
   bool _isLoading = false; // Yükleniyor durumu
-
-  String extractFilePath(String fullPath) {
-    // 'Mevzuatim' kelimesinin bulunduğu index'i buluyoruz
-    final startIndex = fullPath.indexOf('Mevzuatim\\');
-
-    // Eğer 'Mevzuatim' bulunursa, sonrasını döndür
-    if (startIndex != -1) {
-      // 'Mevzuatim\' kısmının hemen sonrasını almak için startIndex + 'Mevzuatim'.length' kadar ilerliyoruz
-      return fullPath.substring(startIndex + 'Mevzuatim\\'.length);
-    } else {
-      // Eğer 'Mevzuatim' bulunmazsa, boş bir değer döndürüyoruz
-      return '';
-    }
-  }
-
-  String formatFileName(String path) {
-    String fileName = path.split('\\').last;
-    if (fileName.endsWith('.docx')) {
-      fileName = fileName.substring(0, fileName.length - 5);
-    }
-    return fileName;
-  }
 
   void _onSearchChanged() async {
     if (_searchController.text.isEmpty) {
