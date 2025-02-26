@@ -22,7 +22,7 @@ class _MainScreenState extends State<MainScreen> {
     MevzuatScreen(),
     GtipScreen(),
     ProfileScreen(),
-    BlogScreen()
+    //BlogScreen()
   ];
 
   @override
@@ -54,10 +54,10 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.person),
             label: 'Profilim',
           ),
-          BottomNavigationBarItem(
+          /* BottomNavigationBarItem(
             icon: Icon(Icons.person_search_rounded),
             label: 'Deneme',
-          ),
+          ),*/
         ],
       ),
     );

@@ -52,18 +52,23 @@ class _WebViewPageState extends State<WebViewPage> {
   void _loadHtmlContent() {
     if (htmlContent != null) {
       final htmlPage = """
-        <html>
-          <head>
-            <meta charset="UTF-8">
-            <style>
-              body { font-family: Arial, sans-serif; padding: 10px; }
-            </style>
-          </head>
-          <body>
-            <div>$htmlContent</div>
-          </body>
-        </html>
-      """;
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              font-size: 18px; /* Yazı boyutunu büyüttük */
+              padding: 10px; 
+            }
+          </style>
+        </head>
+        <body>
+          <div>$htmlContent</div>
+        </body>
+      </html>
+    """;
       _controller.loadHtmlString(htmlPage);
     }
   }
