@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mevzuatim/screens/post_detail_screen.dart';
 import 'package:mevzuatim/services/firestore_service.dart';
 import 'package:mevzuatim/models/blog_model.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:mevzuatim/services/storage_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +15,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final StorageService _storService = StorageService();
   List<BlogModel> _blogs = [];
 
   @override
@@ -22,7 +25,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadBlogs() async {
+    User? user = FirebaseAuth.instance.currentUser; // Kullanıcıyı kontrol et
+    print(user);
+    if (user == null) {
+      // Kullanıcı giriş yapmamışsa hata mesajı gösterebilirsiniz
+      print("Kullanıcı giriş yapmamış.");
+      return;
+    }
+
     try {
+      print(user.uid);
       List<BlogModel> blogs =
           await _firestoreService.getBlogsByManset("Düşünceleriniz");
       setState(() {
@@ -84,9 +96,51 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Row(
               children: [
-                const CircleAvatar(
-                  radius: 18,
-                  backgroundImage: AssetImage('assets/profile.jpg'),
+                // Kullanıcının fotoğrafını göstermek için CircleAvatar
+                FutureBuilder<String?>(
+                  future: _firestoreService.getUserIdFromEmail(blog.yazar).then(
+                      (userId) => _storService.getUserPhotoByName(userId!)),
+                  builder: (context, snapshot) {
+                    // Yükleniyor göstergesi
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircleAvatar(
+                        radius: 18,
+                        backgroundImage: AssetImage('assets/profile.jpg'),
+                      );
+                    }
+
+                    // Hata durumunda varsayılan resim
+                    if (snapshot.hasError) {
+                      return const CircleAvatar(
+                        radius: 18,
+                        backgroundImage: AssetImage('assets/profile.jpg'),
+                      );
+                    }
+
+                    // Fotoğraf bulunamazsa varsayılan resim
+                    if (!snapshot.hasData || snapshot.data == null) {
+                      return const CircleAvatar(
+                        radius: 18,
+                        backgroundImage: AssetImage('assets/profile.jpg'),
+                      );
+                    }
+
+                    // Fotoğraf URL'si alındığında göster
+                    String? photoUrl = snapshot.data;
+
+                    if (photoUrl != null) {
+                      return CircleAvatar(
+                        radius: 18,
+                        backgroundImage: NetworkImage(photoUrl),
+                      );
+                    } else {
+                      // Fotoğraf yoksa varsayılanı göster
+                      return const CircleAvatar(
+                        radius: 18,
+                        backgroundImage: AssetImage('assets/profile.jpg'),
+                      );
+                    }
+                  },
                 ),
                 const SizedBox(width: 10),
                 Column(
@@ -160,22 +214,38 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(color: Colors.blue.shade700, fontSize: 10),
                 ),
                 const Spacer(),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PostDetailScreen(),
+                FutureBuilder<int>(
+                  future: _firestoreService
+                      .getYorumSayisi(blog.id), // Yorum sayısını alıyoruz
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    }
+
+                    if (snapshot.hasError) {
+                      return Text('Hata: ${snapshot.error}');
+                    }
+
+                    int yorumSayisi = snapshot.data ?? 0;
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                PostDetailScreen(postId: blog.id,yorumSayisi: yorumSayisi,),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "$yorumSayisi yorum",
+                        style: TextStyle(
+                          color: Colors.teal.shade700,
+                          fontSize: 10,
+                        ),
                       ),
                     );
                   },
-                  child: Text(
-                    "10 yorum",
-                    style: TextStyle(
-                      color: Colors.teal.shade700,
-                      fontSize: 10,
-                    ),
-                  ),
                 ),
               ],
             ),

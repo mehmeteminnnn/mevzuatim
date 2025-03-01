@@ -22,7 +22,8 @@ class _WebViewPageState extends State<WebViewPage> {
   void initState() {
     super.initState();
     _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted);
+    ..setJavaScriptMode(JavaScriptMode.unrestricted);
+    
 
     fetchHtml();
   }
@@ -59,7 +60,7 @@ class _WebViewPageState extends State<WebViewPage> {
           <style>
             body { 
               font-family: Arial, sans-serif; 
-              font-size: 18px; /* Yazı boyutunu büyüttük */
+              font-size: 15px; /* Yazı boyutunu büyüttük */
               padding: 10px; 
             }
           </style>

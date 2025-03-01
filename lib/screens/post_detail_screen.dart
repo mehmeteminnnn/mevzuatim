@@ -1,7 +1,35 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:mevzuatim/models/blog_model.dart';
+import 'package:mevzuatim/models/blog_yorum.dart';
+import 'package:mevzuatim/services/firestore_service.dart';
+import 'package:intl/intl.dart';
+import 'package:mevzuatim/services/storage_service.dart';
 
-class PostDetailScreen extends StatelessWidget {
-  const PostDetailScreen({super.key});
+class PostDetailScreen extends StatefulWidget {
+  final String postId;
+  final int yorumSayisi;
+  PostDetailScreen(
+      {super.key, required this.postId, required this.yorumSayisi});
+
+  @override
+  State<PostDetailScreen> createState() => _PostDetailScreenState();
+}
+
+class _PostDetailScreenState extends State<PostDetailScreen> {
+  late Future<List<BlogYorum>> _yorumlar;
+  final FirestoreService _firestoreService = FirestoreService();
+  final StorageService _storService = StorageService();
+
+  @override
+  void initState() {
+    super.initState();
+    _yorumlar =
+        _firestoreService.getYorumlar(widget.postId); // Yorumları başlatıyoruz
+    debugPrint("Gelen blogId: ${widget.postId}");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,53 +47,17 @@ class PostDetailScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Gönderi
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Gönderi Başlığı
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const CircleAvatar(
-                      backgroundImage: AssetImage('assets/profile.jpg'),
-                    ),
-                    title: const Text(
-                      "Mert Kaya",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: const Text("Mali Müşavir - Editör\n1 hafta"),
-                  ),
-                  const SizedBox(height: 16),
-                  // Gönderi İçeriği
-                  const Text(
-                    "Bugünkü habere göre; Aile ve Sosyal Hizmetler Bakanlığı tarafından yapılan açıklamada, 16 yaş altı çocukların sosyal medya kullanımının sınırlandırılacağı ve platformların bu konuda daha fazla sorumluluk alması gerektiği belirtildi.\n\nAmacın, küçük çocukların zararlı içeriklerden korunması olduğu belirtilmiş. Benzer uygulamalar dünyanın farklı ülkelerinde de deneniyor. Bu konuda sizin görüşünüzü öğrenmek istiyorum. Düşünceniz seçenekler arasında yoksa, yorum olarak yazabilirsiniz. Gelsin o zaman bu akşamın anketi 🚀",
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 16),
-                  // Etkileşim Butonları
-                  Row(
-                    children: [
-                      TextButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.comment_outlined),
-                        label: const Text("Yorum Yap"),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const Divider(thickness: 8, color: Color(0xFFF5F5F5)),
+            _buildPost(_firestoreService.getBlogByID(widget.postId)), // Gönderi
+
             // Yorumlar Bölümü
             Container(
+              color: Colors.white,
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Yorumlar (10)",
+                  Text(
+                    "Yorumlar (${widget.yorumSayisi})",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -73,25 +65,31 @@ class PostDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   // Yorum Listesi
-                  _buildComment(
-                    "Osman Bahar",
-                    "Gümrük Müşaviri - Editör",
-                    "Ne zamandır beklediğim bir haberdi. Böyle gelişmelerin olduğunu görmek geleceğe daha umutlu bakmamı sağlıyor.",
-                    "1 gün önce",
-                  ),
-                  const Divider(),
-                  _buildComment(
-                    "Ayşe Yılmaz",
-                    "Avukat",
-                    "Çocukların korunması için önemli bir adım. Umarım etkili bir şekilde uygulanır.",
-                    "2 gün önce",
-                  ),
-                  const Divider(),
-                  _buildComment(
-                    "Mehmet Demir",
-                    "Öğretmen",
-                    "Eğitimci olarak bu kararı destekliyorum. Sosyal medyanın çocuklar üzerindeki olumsuz etkilerini sınıfta gözlemliyorum.",
-                    "3 gün önce",
+                  FutureBuilder<List<BlogYorum>>(
+                    future: _yorumlar,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (snapshot.hasError) {
+                        return const Center(
+                            child: Text('Yorumlar yüklenemedi.'));
+                      }
+
+                      final yorumlar = snapshot.data ?? [];
+                      return Column(
+                        children: yorumlar.map((yorum) {
+                          return Column(
+                            children: [
+                              _buildComment(yorum.kullaniciAdi, yorum.yorum,
+                                  yorum.tarih as Timestamp),
+                              const Divider(),
+                            ],
+                          );
+                        }).toList(),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -146,7 +144,13 @@ class PostDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildComment(String name, String title, String comment, String time) {
+  Widget _buildComment(String name, String comment, Timestamp time) {
+    // Timestamp'i DateTime'a çeviriyoruz
+    DateTime date = time.toDate();
+
+    // DateTime'ı istediğiniz formatta string'e çeviriyoruz
+    String formattedTime = DateFormat('dd MMM yyyy, hh:mm a').format(date);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
@@ -167,18 +171,14 @@ class PostDetailScreen extends StatelessWidget {
                       name,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                      ),
-                    ),
                   ],
                 ),
               ),
               Text(
-                time,
+                date
+                    .toLocal()
+                    .toString()
+                    .substring(0, 10), // Formatlanmış zaman
                 style: const TextStyle(color: Colors.grey),
               ),
             ],
@@ -197,6 +197,137 @@ class PostDetailScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPost(Future<BlogModel?> blogFuture) {
+    return FutureBuilder<BlogModel?>(
+      future: blogFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return const Center(child: Text('Gönderi yüklenemedi.'));
+        }
+
+        final blog = snapshot.data;
+        if (blog == null) {
+          return const Center(child: Text('Gönderi bulunamadı.'));
+        }
+
+        return Card(
+          color: Colors.white,
+          elevation: 0,
+          margin: const EdgeInsets.only(bottom: 16.0),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    // Kullanıcının fotoğrafını göstermek için CircleAvatar
+                    FutureBuilder<String?>(
+                      future: _firestoreService
+                          .getUserIdFromEmail(blog.yazar)
+                          .then((userId) =>
+                              _storService.getUserPhotoByName(userId!)),
+                      builder: (context, snapshot) {
+                        // Yükleniyor göstergesi
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircleAvatar(
+                            radius: 18,
+                            backgroundImage: AssetImage('assets/profile.jpg'),
+                          );
+                        }
+
+                        // Hata durumunda varsayılan resim
+                        if (snapshot.hasError) {
+                          return const CircleAvatar(
+                            radius: 18,
+                            backgroundImage: AssetImage('assets/profile.jpg'),
+                          );
+                        }
+
+                        // Fotoğraf bulunamazsa varsayılan resim
+                        if (!snapshot.hasData || snapshot.data == null) {
+                          return const CircleAvatar(
+                            radius: 18,
+                            backgroundImage: AssetImage('assets/profile.jpg'),
+                          );
+                        }
+
+                        // Fotoğraf URL'si alındığında göster
+                        String? photoUrl = snapshot.data;
+
+                        if (photoUrl != null) {
+                          return CircleAvatar(
+                            radius: 18,
+                            backgroundImage: NetworkImage(photoUrl),
+                          );
+                        } else {
+                          // Fotoğraf yoksa varsayılanı göster
+                          return const CircleAvatar(
+                            radius: 18,
+                            backgroundImage: AssetImage('assets/profile.jpg'),
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Kullanıcı adını alıyoruz
+                        FutureBuilder<String?>(
+                          future: _firestoreService
+                              .getUserNameFromEmail(blog.yazar),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Text('');
+                            }
+                            if (snapshot.hasError || !snapshot.hasData) {
+                              return const Text('');
+                            }
+                            return Text(
+                              snapshot.data!,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          },
+                        ),
+                        Text(
+                          DateFormat('dd MMM yyyy').format(blog.tarih),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  blog.baslik,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                HtmlWidget(blog.icerik ?? ''),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

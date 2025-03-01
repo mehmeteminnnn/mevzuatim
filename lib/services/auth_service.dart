@@ -5,7 +5,8 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Kullanıcı girişi
-  Future<bool> loginUser(String email, String password, BuildContext context) async {
+  Future<bool> loginUser(
+      String email, String password, BuildContext context) async {
     try {
       await _auth.signInWithEmailAndPassword(
         email: email,
@@ -19,7 +20,19 @@ class AuthService {
       } else if (e.code == 'wrong-password') {
         message = 'Yanlış şifre!';
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+      return false;
+    }
+  }
+
+  // Şifre sıfırlama e-postası gönderme
+  Future<bool> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      debugPrint("Şifre sıfırlama hatası: ${e.message}");
       return false;
     }
   }

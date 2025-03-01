@@ -13,7 +13,7 @@ class _MevzuatScreenState extends State<MevzuatScreen> {
   final AlgoliaService _algoliaService = AlgoliaService();
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _searchResults = [];
-  String _searchType = "Başlığa Göre Ara"; // Varsayılan arama türü
+  String _searchType = "İçeriğe Göre Ara"; // Varsayılan arama türü
   bool _isLoading = false; // Yükleniyor durumu
 
   void _onSearchChanged() async {

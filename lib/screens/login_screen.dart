@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mevzuatim/screens/main_screen.dart';
 import 'package:mevzuatim/services/auth_service.dart';
+import 'package:mevzuatim/screens/forgot_password_screen.dart'; // Şifre sıfırlama ekranı
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -11,6 +13,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscureText = true;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  // SharedPreferences'tan kayıtlı e-posta ve şifreyi yükle
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _emailController.text = prefs.getString('saved_email') ?? "";
+      _passwordController.text = prefs.getString('saved_password') ?? "";
+      _rememberMe = prefs.getBool('remember_me') ?? false;
+    });
+  }
 
   void _loginUser() async {
     String email = _emailController.text.trim();
@@ -25,6 +44,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
     bool success = await AuthService().loginUser(email, password, context);
     if (success) {
+      final prefs = await SharedPreferences.getInstance();
+      if (_rememberMe) {
+        await prefs.setString('saved_email', email);
+        await prefs.setString('saved_password', password);
+        await prefs.setBool('remember_me', true);
+      } else {
+        await prefs.remove('saved_email');
+        await prefs.remove('saved_password');
+        await prefs.setBool('remember_me', false);
+      }
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => MainScreen()),
@@ -87,13 +117,48 @@ class _LoginScreenState extends State<LoginScreen> {
                 prefixIcon: const Icon(Icons.lock, color: Colors.blueAccent),
               ),
             ),
+            const SizedBox(height: 10),
+
+            // "Beni Hatırla" ve "Şifremi Unuttum" seçenekleri
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Checkbox(
+                      activeColor: Colors.blueAccent,
+                      value: _rememberMe,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _rememberMe = value ?? false;
+                        });
+                      },
+                    ),
+                    Text("Beni Hatırla"),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ForgotPasswordScreen()),
+                    );
+                  },
+                  child: Text(
+                    "Şifremi Unuttum",
+                    style: TextStyle(color: Colors.blueAccent),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
 
             // Giriş butonu
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _loginUser, // Giriş işlemini başlatır
+                onPressed: _loginUser,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blueAccent,
                   shape: RoundedRectangleBorder(
