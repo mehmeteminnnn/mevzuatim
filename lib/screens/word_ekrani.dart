@@ -22,8 +22,7 @@ class _WebViewPageState extends State<WebViewPage> {
   void initState() {
     super.initState();
     _controller = WebViewController()
-    ..setJavaScriptMode(JavaScriptMode.unrestricted);
-    
+      ..setJavaScriptMode(JavaScriptMode.unrestricted);
 
     fetchHtml();
   }
@@ -52,6 +51,10 @@ class _WebViewPageState extends State<WebViewPage> {
 
   void _loadHtmlContent() {
     if (htmlContent != null) {
+      // HTML içeriğini düzenleyerek bağlantıları tıklanamaz hale getirelim
+      String updatedHtmlContent = htmlContent!
+          .replaceAll(RegExp(r'<a\s+[^>]*href="([^"]*)"[^>]*>'), '<a>');
+
       final htmlPage = """
       <html>
         <head>
@@ -66,7 +69,7 @@ class _WebViewPageState extends State<WebViewPage> {
           </style>
         </head>
         <body>
-          <div>$htmlContent</div>
+          <div>$updatedHtmlContent</div>
         </body>
       </html>
     """;
