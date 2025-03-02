@@ -17,6 +17,15 @@ class BlogYorum {
     );
   }
 
+  // Firestore'a veri eklemek için, BlogYorum nesnesini bir Map'e dönüştürme
+  Map<String, dynamic> toMap() {
+    return {
+      'kullanici_adi': kullaniciAdi,
+      'tarih': tarih,
+      'yorum': yorum,
+    };
+  }
+
   // Tarih formatını istediğiniz şekilde dönüştürmek için bir yardımcı metod ekleyebilirsiniz
   String get formattedDate {
     return "${tarih.toDate().day}-${tarih.toDate().month}-${tarih.toDate().year} ${tarih.toDate().hour}:${tarih.toDate().minute}";

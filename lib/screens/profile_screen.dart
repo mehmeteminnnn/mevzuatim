@@ -1,7 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mevzuatim/services/firestore_service.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String _userName = 'Mertaa Kaya'; // Default name
+  String _userRole = 'Mali Müşavir - Editör'; // Default role
+  String _userLocation = 'İstanbul, Türkiye'; // Default location
+  String _profileImage = 'assets/profile.jpg'; // Default profile image
+  //String _blogContent = "Yükleniyor...";
+  String authId = FirebaseAuth.instance.currentUser!.uid;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfile(); // Fetch user profile on initialization
+    //_loadBlogContent();
+  }
+
+  /* void _loadBlogContent() async {
+    String content =
+        (await FirestoreService().getLastBlogByAuthId(authId)) as String;
+    setState(() {
+      _blogContent = content;
+    });
+  }*/
+
+  // Fetch user data from Firestore using Auth ID
+  Future<void> _fetchUserProfile() async {
+    User? user = FirebaseAuth.instance.currentUser; // Get the current user
+    if (user != null) {
+      // Fetch user data from Firestore
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('kullanıcılar')
+          .doc(user.uid) // Get user by their auth ID
+          .get();
+
+      if (userDoc.exists) {
+        setState(() {
+          // Assign fetched data to the state variables
+          _userName =
+              userDoc['kullanici adi'] ?? 'No Name'; // Field name might differ
+          _userRole = userDoc['yetki'] ?? 'No Role';
+          _profileImage = 'assets/profile.jpg';
+        });
+      } else {
+        print("User document does not exist");
+      }
+    } else {
+      print("No user logged in");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,14 +66,14 @@ class ProfileScreen extends StatelessWidget {
         title: const Text(
           "MEVZUATIM",
           style: TextStyle(
-            color: Color(0xFF64B6AC), // Mavi renk
-            fontSize: 20, // Daha küçük font
+            color: Color(0xFF64B6AC),
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        toolbarHeight: 40, // AppBar yüksekliği azaltıldı
+        toolbarHeight: 40,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -29,21 +85,21 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 25,
-                    backgroundImage: AssetImage('assets/profile.jpg'),
+                    backgroundImage: AssetImage(_profileImage),
                   ),
                   const SizedBox(width: 16),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Mert Kaya',
-                          style: TextStyle(
+                      Text(_userName,
+                          style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold)),
-                      const Text('Mali Müşavir - Editör',
-                          style: TextStyle(color: Colors.grey, fontSize: 13)),
-                      const Text(
-                        'İstanbul, Türkiye',
-                        style: TextStyle(color: Colors.grey, fontSize: 13),
-                      ),
+                      Text(_userRole,
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 13)),
+                      Text(_userLocation,
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 13)),
                     ],
                   ),
                   SizedBox(width: 16),
@@ -63,7 +119,6 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             const Divider(),
 
             // Hakkında
@@ -96,11 +151,8 @@ class ProfileScreen extends StatelessWidget {
                     onPressed: () {},
                     icon: Icon(Icons.add,
                         size: 14, color: Colors.blue), // Daha küçük ikon
-                    label: Text(
-                      "Yeni Gönderi",
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.blue), // Daha küçük font
-                    ),
+                    label: Text("Yeni Gönderi",
+                        style: TextStyle(fontSize: 12, color: Colors.blue)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(
@@ -121,9 +173,9 @@ class ProfileScreen extends StatelessWidget {
               leading: const CircleAvatar(
                 backgroundImage: AssetImage('assets/profile.jpg'),
               ),
-              title: const Text("Mert Kaya",
+              title: Text("$_userName",
                   style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text(
+              subtitle: Text(
                 "Bugünkü habere göre; Aile ve Sosyal Hizmetler Bakanlığı tarafından açıklamada, "
                 "16 yaş altı çocukların sosyal medya kullanımı sınırlandırılacak...",
               ),
@@ -259,83 +311,38 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     items: [
-                      DropdownMenuItem(
-                        child: Text('Tam Zamanlı'),
-                        value: 'Tam Zamanlı',
-                      ),
-                      DropdownMenuItem(
-                        child: Text('Yarı Zamanlı'),
-                        value: 'Yarı Zamanlı',
-                      ),
-                      DropdownMenuItem(
-                        child: Text('Freelance'),
-                        value: 'Freelance',
-                      ),
+                      DropdownMenuItem(child: Text('Tam Zamanlı')),
+                      DropdownMenuItem(child: Text('Yarı Zamanlı')),
+                      DropdownMenuItem(child: Text('Freelance')),
                     ],
                     onChanged: (value) {},
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Çalışma Dönemi
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Çalışma Dönemi',
-                      labelStyle: const TextStyle(color: Colors.blue),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue, width: 2),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Colors.blue.shade200, width: 1),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Konum
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Konum',
-                      labelStyle: const TextStyle(color: Colors.blue),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue, width: 2),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Colors.blue.shade200, width: 1),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
                   ),
                 ],
               ),
             ),
           ),
           actions: <Widget>[
-            TextButton(
-              child: const Text('İptal', style: TextStyle(fontSize: 16)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.blue,
-              ),
-            ),
             ElevatedButton(
-              child: const Text('Kaydet'),
               onPressed: () {
-                // Kaydetme işlemi
                 Navigator.of(context).pop();
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.blue,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
+                    borderRadius: BorderRadius.circular(15)),
               ),
+              child: const Text("Kaydet"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.grey,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+              ),
+              child: const Text("İptal"),
             ),
           ],
         );
@@ -343,206 +350,110 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // İş deneyimi düzenleme için Bottom Sheet
-  void _showEditExperienceDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Başlık
-                Text(
-                  "İş Deneyimini Düzenle",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.grey[800]),
-                ),
-                const SizedBox(height: 20),
-
-                // İş Ünvanı
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'İş Ünvanı',
-                    labelStyle:
-                        TextStyle(color: Colors.grey[800], fontSize: 12),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Colors.blue.shade200, width: 1),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // İstihdam Türü
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    labelText: 'İstihdam Türü',
-                    labelStyle:
-                        TextStyle(color: Colors.grey[800], fontSize: 12),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Colors.blue.shade200, width: 1),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  items: [
-                    DropdownMenuItem(
-                      child: Text('Tam Zamanlı'),
-                      value: 'Tam Zamanlı',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('Yarı Zamanlı'),
-                      value: 'Yarı Zamanlı',
-                    ),
-                    DropdownMenuItem(
-                      child: Text('Freelance'),
-                      value: 'Freelance',
-                    ),
-                  ],
-                  onChanged: (value) {},
-                ),
-                const SizedBox(height: 16),
-
-                // Çalışma Dönemi
-
-                //baslik,istihdam turu(linkedinden bak çırak hariç),sirket veya kurulus,baslama bitiş tarihi,konum
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Çalışma Dönemi',
-                    labelStyle:
-                        TextStyle(color: Colors.grey[800], fontSize: 12),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Colors.blue.shade200, width: 1),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Konum
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Konum',
-                    labelStyle:
-                        TextStyle(color: Colors.grey[800], fontSize: 12),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Colors.blue.shade200, width: 1),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Aksiyon Butonları
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(); // Kapatma
-                      },
-                      child:
-                          const Text('İptal', style: TextStyle(fontSize: 16)),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.blue, // Mavi renk
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Kaydetme işlemi
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Kaydet'),
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.blue, // Mavi renk
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /* // İş deneyimi düzenlemek için gösterilecek dialog
+  // İş deneyimini düzenlemek için gösterilecek dialog
   void _showEditExperienceDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("İş Deneyimini Düzenle"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'İş Ünvanı',
-                ),
+          title: Text("İş Deneyimi Düzenle",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.blue[300])),
+          content: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  // İş Ünvanı
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: 'İş Ünvanı',
+                      labelStyle: const TextStyle(color: Colors.blue),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue, width: 2),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Colors.blue.shade200, width: 1),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Şirket Adı
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Şirket Adı',
+                      labelStyle: const TextStyle(color: Colors.blue),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue, width: 2),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Colors.blue.shade200, width: 1),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // İstihdam Türü
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: 'İstihdam Türü',
+                      labelStyle: const TextStyle(color: Colors.blue),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue, width: 2),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Colors.blue.shade200, width: 1),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    items: [
+                      DropdownMenuItem(child: Text('Tam Zamanlı')),
+                      DropdownMenuItem(child: Text('Yarı Zamanlı')),
+                      DropdownMenuItem(child: Text('Freelance')),
+                    ],
+                    onChanged: (value) {},
+                  ),
+                ],
               ),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Şirket Adı',
-                ),
-              ),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Çalışma Dönemi',
-                ),
-              ),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Konum',
-                ),
-              ),
-            ],
+            ),
           ),
           actions: <Widget>[
-            TextButton(
-              child: const Text('İptal'),
+            ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.blue,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+              ),
+              child: const Text("Kaydet"),
             ),
             ElevatedButton(
-              child: const Text('Kaydet'),
               onPressed: () {
-                // Kaydetme işlemi
                 Navigator.of(context).pop();
               },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.grey,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+              ),
+              child: const Text("İptal"),
             ),
           ],
         );
       },
     );
-  }*/
+  }
 }

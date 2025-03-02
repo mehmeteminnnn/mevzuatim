@@ -22,13 +22,34 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   late Future<List<BlogYorum>> _yorumlar;
   final FirestoreService _firestoreService = FirestoreService();
   final StorageService _storService = StorageService();
+  final TextEditingController _yorumController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _yorumlar =
-        _firestoreService.getYorumlar(widget.postId); // Yorumları başlatıyoruz
+    _yorumlar = _firestoreService.getYorumlar(widget.postId);
     debugPrint("Gelen blogId: ${widget.postId}");
+  }
+
+  // Yorum ekleme fonksiyonu
+  void _addYorum() async {
+    if (_yorumController.text.isNotEmpty) {
+      BlogYorum yeniYorum = BlogYorum(
+        kullaniciAdi:
+            'Kullanıcı Adı', // Buraya kullanıcı ismini ekleyebilirsiniz
+        tarih: Timestamp.now(),
+        yorum: _yorumController.text,
+      );
+
+      // Yorum Firestore'a kaydedilir
+      await _firestoreService.addComment(widget.postId, _yorumController.text);
+
+      // Yorumları yeniden yükleyip inputu temizliyoruz
+      setState(() {
+        _yorumlar = _firestoreService.getYorumlar(widget.postId);
+        _yorumController.clear();
+      });
+    }
   }
 
   @override
@@ -47,7 +68,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildPost(_firestoreService.getBlogByID(widget.postId)), // Gönderi
+            _buildPost(_firestoreService.getBlogByID(widget.postId)),
 
             // Yorumlar Bölümü
             Container(
@@ -120,6 +141,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
+                  controller: _yorumController,
                   decoration: InputDecoration(
                     hintText: 'Yorum yaz...',
                     border: OutlineInputBorder(
@@ -135,7 +157,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               const SizedBox(width: 8),
               IconButton(
                 icon: const Icon(Icons.send),
-                onPressed: () {},
+                onPressed: _addYorum, // Yorum ekleme butonuna tıklanınca
               ),
             ],
           ),
@@ -228,14 +250,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               children: [
                 Row(
                   children: [
-                    // Kullanıcının fotoğrafını göstermek için CircleAvatar
                     FutureBuilder<String?>(
                       future: _firestoreService
                           .getUserIdFromEmail(blog.yazar)
                           .then((userId) =>
                               _storService.getUserPhotoByName(userId!)),
                       builder: (context, snapshot) {
-                        // Yükleniyor göstergesi
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return const CircleAvatar(
@@ -244,7 +264,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           );
                         }
 
-                        // Hata durumunda varsayılan resim
                         if (snapshot.hasError) {
                           return const CircleAvatar(
                             radius: 18,
@@ -252,7 +271,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           );
                         }
 
-                        // Fotoğraf bulunamazsa varsayılan resim
                         if (!snapshot.hasData || snapshot.data == null) {
                           return const CircleAvatar(
                             radius: 18,
@@ -260,7 +278,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           );
                         }
 
-                        // Fotoğraf URL'si alındığında göster
                         String? photoUrl = snapshot.data;
 
                         if (photoUrl != null) {
@@ -269,7 +286,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             backgroundImage: NetworkImage(photoUrl),
                           );
                         } else {
-                          // Fotoğraf yoksa varsayılanı göster
                           return const CircleAvatar(
                             radius: 18,
                             backgroundImage: AssetImage('assets/profile.jpg'),
@@ -281,7 +297,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Kullanıcı adını alıyoruz
                         FutureBuilder<String?>(
                           future: _firestoreService
                               .getUserNameFromEmail(blog.yazar),

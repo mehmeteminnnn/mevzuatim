@@ -78,6 +78,44 @@ class FirestoreService {
     return await _getUserField(email, 'yetki');
   }
 
+
+
+Future<Map<String, dynamic>?> getLastBlogByAuthId(String authId) async {
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  try {
+    // Kullanıcının mail adresini bul
+    DocumentSnapshot userDoc =
+        await firestore.collection('users').doc(authId).get();
+
+    if (!userDoc.exists) {
+      print("Kullanıcı bulunamadı.");
+      return null;
+    }
+
+    String userEmail = userDoc['mail'];
+
+    // En son yazılan blogu tarihe göre sırala ve getir
+    QuerySnapshot blogQuery = await firestore
+        .collection('blogs')
+        .where('yazar', isEqualTo: userEmail)
+        .orderBy('tarih', descending: true)
+        .limit(1)
+        .get();
+
+    if (blogQuery.docs.isEmpty) {
+      print("Bu kullanıcıya ait blog bulunamadı.");
+      return null;
+    }
+
+    return blogQuery.docs.first.data() as Map<String, dynamic>;
+  } catch (e) {
+    print("Hata oluştu: $e");
+    return null;
+  }
+}
+
+
   // Kullanıcı bilgilerini getiren ortak fonksiyon
   Future<String?> _getUserField(String email, String field) async {
     if (!_isUserLoggedIn()) {
@@ -125,6 +163,44 @@ class FirestoreService {
       return null;
     }
   }
+  Future<BlogModel?> getBlogByEmail(String email) async {
+  try {
+    QuerySnapshot snapshot = await _db
+        .collection('blog')
+        .where('mail', isEqualTo: email)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      return BlogModel.fromFirestore(snapshot.docs.first);
+    } else {
+      return null; // Blog bulunamazsa null döndür
+    }
+  } catch (e) {
+    throw Exception('Blog verisi alınırken hata oluştu: $e');
+  }
+}
+
+
+
+
+  Future<String?> getUserEmailFromId(String userId) async {
+  try {
+    DocumentSnapshot userSnapshot =
+        await _db.collection('kullanıcılar').doc(userId).get();
+
+    if (!userSnapshot.exists) {
+      print("Kullanıcı bulunamadı.");
+      return null;
+    }
+
+    return userSnapshot['mail']; // Kullanıcının e-posta adresini döndür
+  } catch (e) {
+    print("Firestore hatası: $e");
+    return null;
+  }
+}
+
 
   Future<List<BlogYorum>> getYorumlar(String blogId) async {
     try {
@@ -149,4 +225,39 @@ class FirestoreService {
       return [];
     }
   }
+
+
+  // Yorum eklemek için fonksiyon
+Future<void> addComment(String blogId, String commentText) async {
+  if (!_isUserLoggedIn()) {
+    throw Exception('Yorum yapabilmek için giriş yapmanız gerekmektedir.');
+  }
+
+  try {
+    // Kullanıcı bilgilerini al
+    User? currentUser = _auth.currentUser;
+    String userEmail = currentUser?.email ?? '';
+
+    // Yorum verisi oluşturuluyor
+    BlogYorum newComment = BlogYorum(
+      yorum: commentText,
+      kullaniciAdi: userEmail,
+      tarih: Timestamp.now(),
+    );
+
+    // Yorum Firestore'a ekleniyor
+    await _db.collection('blog_yorum')
+        .doc(blogId)
+        .collection('yorumlar')
+        .add(newComment.toMap());
+
+    print("Yorum başarıyla eklendi.");
+  } catch (e) {
+    print("Yorum eklenirken hata oluştu: $e");
+    throw Exception("Yorum eklenirken bir hata oluştu.");
+  }
+}
+ 
+
+
 }
