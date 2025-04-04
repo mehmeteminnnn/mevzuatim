@@ -1,0 +1,2 @@
+C:/Users/mhmtm/Desktop/mevzuatim/android/app/.cxx/Debug/j4s3u5m4/x86/CMakeFiles/edit_cache.dir
+C:/Users/mhmtm/Desktop/mevzuatim/android/app/.cxx/Debug/j4s3u5m4/x86/CMakeFiles/rebuild_cache.dir
