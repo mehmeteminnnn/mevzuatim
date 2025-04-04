@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mevzuatim/services/api_service.dart';
+import 'package:mevzuatim/models/gtip_model.dart';
 
 class GtipScreen extends StatefulWidget {
   @override
@@ -9,22 +10,25 @@ class GtipScreen extends StatefulWidget {
 class _GtipScreenState extends State<GtipScreen> {
   final TextEditingController _controller = TextEditingController();
   final ApiService _apiService = ApiService();
-  String _result = 'Arama yapabilirsiniz'; // Başlangıç mesajı
-  void _checkApi() async {
-    await _apiService.testPostApi();
-  }
+  List<GtipModel> _gtipList = [];
 
-  void _search() async {
-    String query = _controller.text.trim(); // Boşlukları temizle
-    if (query.isNotEmpty) {
+  Future<void> _search() async {
+    if (_controller.text.isNotEmpty) {
+      try {
+        List<GtipModel> result =
+            await _apiService.fetchGtipData(_controller.text);
+        setState(() {
+          _gtipList = result;
+        });
+      } catch (e) {
+        setState(() {
+          _gtipList = [];
+        });
+        print("Hata: $e");
+      }
+    } else {
       setState(() {
-        _result = "Aranıyor..."; // Kullanıcıya bilgi ver
-      });
-
-      var response = await _apiService.searchTable(query);
-
-      setState(() {
-        _result = response != null ? response.toString() : 'Sonuç bulunamadı';
+        _gtipList = [];
       });
     }
   }
@@ -36,21 +40,22 @@ class _GtipScreenState extends State<GtipScreen> {
         title: const Text(
           "MEVZUATIM",
           style: TextStyle(
-            color: Color(0xFF64B6AC), // Mavi renk
-            fontSize: 20, // Daha küçük font
+            color: Color(0xFF64B6AC),
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        toolbarHeight: 40, // AppBar yüksekliği azaltıldı
+        toolbarHeight: 40,
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
             TextField(
-              controller: _controller, // Controller eklendi
+              controller: _controller,
+              onChanged: (_) => _search(), // 👈 Yazdıkça tetiklenir
               decoration: InputDecoration(
                 hintText: "GTIP Araması Yap",
                 prefixIcon: Icon(Icons.search),
@@ -59,32 +64,31 @@ class _GtipScreenState extends State<GtipScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 10), // Buton ile arasına boşluk eklendi
-            ElevatedButton(
-              onPressed: _search,
-              child: Text("Ara"),
-            ),
             SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _checkApi,
-              child: Text("API Durumunu Kontrol Et"),
-            ),
-
+            // ElevatedButton kaldırıldı ✅
             Expanded(
-              child: Container(
-                width: double.infinity, // Genişliği tam ekran yap
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: SingleChildScrollView(
-                  child: Text(
-                    _result, // API’den gelen sonuç burada gösterilecek
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
+              child: _gtipList.isNotEmpty
+                  ? SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        columnSpacing: 15,
+                        columns: const [
+                          DataColumn(label: Text("G.T.İ.P")),
+                          DataColumn(label: Text("Tanım")),
+                          DataColumn(label: Text("Ölçü Birimi")),
+                          DataColumn(label: Text("Vergi")),
+                        ],
+                        rows: _gtipList.map((gtip) {
+                          return DataRow(cells: [
+                            DataCell(Text(gtip.gtipNo)),
+                            DataCell(Text(gtip.tanim)),
+                            DataCell(Text(gtip.olcu)),
+                            DataCell(Text(gtip.vergi)),
+                          ]);
+                        }).toList(),
+                      ),
+                    )
+                  : Center(child: Text("Arama yapabilirsiniz")),
             ),
           ],
         ),
