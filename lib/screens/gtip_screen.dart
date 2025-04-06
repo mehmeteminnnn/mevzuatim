@@ -64,74 +64,94 @@ class _GtipScreenState extends State<GtipScreen> {
                 ),
               ),
             ),
+            ElevatedButton(
+                onPressed: _apiService.fetchAltTablo, child: Text("Test")),
             SizedBox(height: 10),
             Expanded(
               child: _gtipList.isNotEmpty
                   ? SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columnSpacing: 10, // Daha az boşluk bırakıyoruz
-                        columns: const [
-                          DataColumn(
-                            label: SizedBox(
-                              width: 80,
-                              child: Text("G.T.İ.P",
-                                  overflow: TextOverflow.ellipsis),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 150,
-                              child: Text("Tanım",
-                                  overflow: TextOverflow.ellipsis),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 100,
-                              child: Text("Ölçü Birimi",
-                                  overflow: TextOverflow.ellipsis),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 80,
-                              child: Text("Vergi",
-                                  overflow: TextOverflow.ellipsis),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 80,
-                              child: Text("Alt Tablo",
-                                  overflow: TextOverflow.ellipsis),
-                            ),
-                          ),
-                        ],
-                        rows: _gtipList.map((gtip) {
-                          return DataRow(cells: [
-                            DataCell(SizedBox(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: DataTable(
+                          columnSpacing: 10, // Daha az boşluk bırakıyoruz
+                          columns: const [
+                            DataColumn(
+                              label: SizedBox(
                                 width: 80,
-                                child: Text(gtip.gtipNo,
-                                    overflow: TextOverflow.ellipsis))),
-                            DataCell(SizedBox(
+                                child: Text("G.T.İ.P",
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
                                 width: 150,
-                                child: Text(gtip.tanim,
-                                    overflow: TextOverflow.ellipsis))),
-                            DataCell(SizedBox(
+                                child: Text("Tanım",
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
                                 width: 100,
-                                child: Text(gtip.olcu,
-                                    overflow: TextOverflow.ellipsis))),
-                            DataCell(SizedBox(
+                                child: Text("Ölçü Birimi",
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
                                 width: 80,
-                                child: Text(gtip.vergi,
-                                    overflow: TextOverflow.ellipsis))),
-                            DataCell(SizedBox(
+                                child: Text("Vergi",
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
                                 width: 80,
-                                child: Text(gtip.altTablo[0][0],
-                                    overflow: TextOverflow.ellipsis))),
-                          ]);
-                        }).toList(),
+                                child: Text("Alt Tablolar",
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                            ),
+                          ],
+                          rows: _gtipList.map((gtip) {
+                            return DataRow(cells: [
+                              DataCell(SizedBox(
+                                  width: 80,
+                                  child: Text(gtip.gtipNo,
+                                      overflow: TextOverflow.ellipsis))),
+                              DataCell(SizedBox(
+                                  width: 150,
+                                  child: Text(gtip.tanim,
+                                      overflow: TextOverflow.ellipsis))),
+                              DataCell(SizedBox(
+                                  width: 100,
+                                  child: Text(gtip.olcu,
+                                      overflow: TextOverflow.ellipsis))),
+                              DataCell(SizedBox(
+                                  width: 80,
+                                  child: Text(gtip.vergi,
+                                      overflow: TextOverflow.ellipsis))),
+                              DataCell(
+                                SizedBox(
+                                    width: 80,
+                                    child: Text(
+                                      gtip.altTablo
+                                          .map((row) {
+                                            // Her satırda 3. eleman var mı kontrol et
+                                            if (row.length > 2) {
+                                              return row[2];
+                                            } else {
+                                              return '';
+                                            }
+                                          })
+                                          .where((value) => value
+                                              .isNotEmpty) // Boş stringleri filtrele
+                                          .join(
+                                              ', '), // Kalanları , ile birleştir
+                                    )),
+                              ),
+                            ]);
+                          }).toList(),
+                        ),
                       ),
                     )
                   : Center(child: Text("Arama yapabilirsiniz")),

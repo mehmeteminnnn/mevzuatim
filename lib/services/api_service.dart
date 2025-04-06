@@ -4,6 +4,8 @@ import 'package:mevzuatim/models/gtip_model.dart';
 
 class ApiService {
   static const String _baseUrl = 'https://www.mevzuatim.com/tablo-ara/';
+  static const String _baseUrlalttablo = 'https://www.mevzuatim.com/alt-tablo';
+
   Future<void> testPostApi() async {
     try {
       final response = await http.post(
@@ -17,9 +19,8 @@ class ApiService {
     }
   }
 
-
-
   Future<List<GtipModel>> fetchGtipData(String search) async {
+    testPostApi();
     try {
       final response = await http.post(
         Uri.parse(_baseUrl),
@@ -30,7 +31,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         final List<dynamic> data = responseData['data'];
-        
+
         return data.map((json) => GtipModel.fromJson(json)).toList();
       } else {
         throw Exception("API Hatası: ${response.statusCode}");
@@ -40,52 +41,32 @@ class ApiService {
     }
   }
 
-  Future<bool> checkApiStatus() async {
-    final Uri url = Uri.parse(_baseUrl);
-
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        print(" API çalışıyor!");
-        return true;
-      } else {
-        print(" API çalışmıyor! Hata: ${response.statusCode}");
-        return false;
-      }
-    } catch (e) {
-      print("⚠️ API'ye bağlanırken hata oluştu: $e");
-      return false;
-    }
-  }
-
-  Future<dynamic> searchTable(String query) async {
-    final Uri url = Uri.parse(_baseUrl);
-
-    final Map<String, dynamic> requestBody = {
-      'search': query, // API'nin istediği "search" anahtar kelimesi
-    };
-
+  Future<void> fetchAltTablo() async {
     try {
       final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(requestBody),
+        Uri.parse(_baseUrlalttablo),
+        body: jsonEncode({
+          "alt_tablo": [""],
+          "gtip": "7004"
+        }),
       );
 
       if (response.statusCode == 200) {
-        // Başarılı yanıt döndüğünde JSON'u parse et
-        return jsonDecode(response.body);
+        final Map<String, dynamic> jsonData = jsonDecode(response.body);
+        print("Alt Tablo JSON Verisi:");
+        print(jsonEncode(jsonData)); // Tüm JSON veriyi yazdırır
+
+        // Eğer sadece 'list' kısmı lazımsa:
+        if (jsonData.containsKey('list')) {
+          print("Alt Tablo List:");
+          print(jsonEncode(jsonData['list']));
+        }
       } else {
-        // Hata durumunda log yazdır
-        print('Hata: ${response.statusCode} - ${response.body}');
-        return null;
+        print(
+            "Alt tablo verisi alınamadı. Status Code: ${response.statusCode}");
       }
     } catch (e) {
-      print('Bağlantı hatası: $e');
-      return null;
+      print("Alt tablo API hatası: $e");
     }
   }
 }

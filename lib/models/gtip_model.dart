@@ -22,8 +22,9 @@ class GtipModel {
       tanim: json['tanim'],
       olcu: json['olcu'] ?? '-',
       vergi: json['vergi'] ?? '-',
-      altTablo: List<List<String>>.from(
-          json['alt_tablo']['list'].map((item) => List<String>.from(item))),
+      altTablo: (json['alt_tablo']['list'] as List)
+          .map((item) => (item as List).map((e) => e.toString()).toList())
+          .toList(),
     );
   }
 }
