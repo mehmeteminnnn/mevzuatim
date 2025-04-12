@@ -132,22 +132,31 @@ class _GtipScreenState extends State<GtipScreen> {
                                       overflow: TextOverflow.ellipsis))),
                               DataCell(
                                 SizedBox(
-                                    width: 80,
-                                    child: Text(
-                                      gtip.altTablo
-                                          .map((row) {
-                                            // Her satırda 3. eleman var mı kontrol et
-                                            if (row.length > 2) {
-                                              return row[2];
-                                            } else {
-                                              return '';
-                                            }
-                                          })
-                                          .where((value) => value
-                                              .isNotEmpty) // Boş stringleri filtrele
-                                          .join(
-                                              ', '), // Kalanları , ile birleştir
-                                    )),
+                                  width: 80,
+                                  child: Column(
+                                    children: gtip.altTablo.map((row) {
+                                      if (row.length > 2 && row[2].isNotEmpty) {
+                                        debugPrint(
+                                            'https://mevzuatim.com/${row[2]}');
+                                        String imageUrl =
+                                            'https://mevzuatim.com/${row[2]}';
+                                        return Image.network(
+                                          imageUrl,
+                                          width: 60,
+                                          height: 60,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return const Icon(Icons.error);
+                                          },
+                                        );
+                                      } else {
+                                        return const SizedBox
+                                            .shrink(); // Boş eleman
+                                      }
+                                    }).toList(),
+                                  ),
+                                ),
                               ),
                             ]);
                           }).toList(),
