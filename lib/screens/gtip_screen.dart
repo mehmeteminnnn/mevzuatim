@@ -11,6 +11,7 @@ class _GtipScreenState extends State<GtipScreen> {
   final TextEditingController _controller = TextEditingController();
   final ApiService _apiService = ApiService();
   List<GtipModel> _gtipList = [];
+  bool _searchSuccessful = false;
 
   Future<void> _search() async {
     if (_controller.text.isNotEmpty) {
@@ -19,23 +20,51 @@ class _GtipScreenState extends State<GtipScreen> {
             await _apiService.fetchGtipData(_controller.text);
         setState(() {
           _gtipList = result;
+          _searchSuccessful = result.isNotEmpty;
         });
+
+        if (_searchSuccessful) {
+          _showSearchSuccessDialog();
+        }
       } catch (e) {
         setState(() {
           _gtipList = [];
+          _searchSuccessful = false;
         });
         print("Hata: $e");
       }
     } else {
       setState(() {
         _gtipList = [];
+        _searchSuccessful = false;
       });
     }
+  }
+
+  void _showSearchSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Arama Başarılı'),
+          content: Text('2. alt tablo için de arama yapabilirsiniz.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Tamam'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "MEVZUATIM",
@@ -53,19 +82,34 @@ class _GtipScreenState extends State<GtipScreen> {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            TextField(
-              controller: _controller,
-              onChanged: (_) => _search(), // Arama yapıldıkça güncelle
-              decoration: InputDecoration(
-                hintText: "GTIP Araması Yap",
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: "GTIP Araması Yap",
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: _search,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(50, 50),
+                    backgroundColor: Color(0xFF64B6AC),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: Icon(Icons.search, color: Colors.white),
+                ),
+              ],
             ),
-            ElevatedButton(
-                onPressed: _apiService.fetchAltTablo, child: Text("Test")),
             SizedBox(height: 10),
             Expanded(
               child: _gtipList.isNotEmpty
@@ -74,7 +118,7 @@ class _GtipScreenState extends State<GtipScreen> {
                       child: SingleChildScrollView(
                         scrollDirection: Axis.vertical,
                         child: DataTable(
-                          columnSpacing: 10, // Daha az boşluk bırakıyoruz
+                          columnSpacing: 10,
                           columns: const [
                             DataColumn(
                               label: SizedBox(
@@ -133,28 +177,33 @@ class _GtipScreenState extends State<GtipScreen> {
                               DataCell(
                                 SizedBox(
                                   width: 80,
-                                  child: Column(
-                                    children: gtip.altTablo.map((row) {
-                                      if (row.length > 2 && row[2].isNotEmpty) {
-                                        debugPrint(
-                                            'https://mevzuatim.com/${row[2]}');
-                                        String imageUrl =
-                                            'https://mevzuatim.com/${row[2]}';
-                                        return Image.network(
-                                          imageUrl,
-                                          width: 60,
-                                          height: 60,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            return const Icon(Icons.error);
-                                          },
-                                        );
-                                      } else {
-                                        return const SizedBox
-                                            .shrink(); // Boş eleman
-                                      }
-                                    }).toList(),
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Row(
+                                      children: gtip.altTablo.map((row) {
+                                        if (row.length > 2 &&
+                                            row[2].isNotEmpty) {
+                                          String imageUrl =
+                                              'https://mevzuatim.com/${row[2]}';
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 2.0),
+                                            child: Image.network(
+                                              imageUrl,
+                                              width: 60,
+                                              height: 60,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                return const Icon(Icons.error);
+                                              },
+                                            ),
+                                          );
+                                        } else {
+                                          return const SizedBox.shrink();
+                                        }
+                                      }).toList(),
+                                    ),
                                   ),
                                 ),
                               ),
