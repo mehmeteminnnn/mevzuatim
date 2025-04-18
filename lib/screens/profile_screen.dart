@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mevzuatim/models/job_experience_model.dart';
 import 'package:mevzuatim/services/firestore_service.dart';
+import 'package:mevzuatim/services/profile_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,19 +13,36 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _userName = 'Mertaa Kaya'; // Default name
-  String _userRole = 'Mali Müşavir - Editör'; // Default role
-  String _userLocation = 'İstanbul, Türkiye'; // Default location
-  String _profileImage = 'assets/profile.jpg'; // Default profile image
-  //String _blogContent = "Yükleniyor...";
-  String authId = FirebaseAuth.instance.currentUser!.uid;
+  UserProfile? userProfile;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
     super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      final uid = currentUser.uid;
+      debugPrint("Kullanıcı ID: $uid");
+      final service = UserProfileService();
+      final profile = await service.fetchUserProfile(uid);
+      setState(() {
+        userProfile = profile;
+      });
+    } else {
+      // kullanıcı giriş yapmamış
+      print("Kullanıcı oturum açmamış.");
+    }
+  }
+  /*@override
+  void initState() {
+    super.initState();
     _fetchUserProfile(); // Fetch user profile on initialization
     //_loadBlogContent();
-  }
+  }*/
 
   /* void _loadBlogContent() async {
     String content =
@@ -34,7 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }*/
 
   // Fetch user data from Firestore using Auth ID
-  Future<void> _fetchUserProfile() async {
+  /*Future<void> _fetchUserProfile() async {
     User? user = FirebaseAuth.instance.currentUser; // Get the current user
     if (user != null) {
       // Fetch user data from Firestore
@@ -57,11 +76,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       print("No user logged in");
     }
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
+    if (userProfile == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text("Yükleniyor...")),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "MEVZUATIM",
@@ -85,21 +111,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   CircleAvatar(
                     radius: 25,
-                    backgroundImage: AssetImage(_profileImage),
+                    backgroundImage: NetworkImage(userProfile!.profileImage),
                   ),
                   const SizedBox(width: 16),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_userName,
+                      Text(userProfile!.username,
                           style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold)),
-                      Text(_userRole,
+                      Text(userProfile!.yetki,
                           style: const TextStyle(
                               color: Colors.grey, fontSize: 13)),
-                      Text(_userLocation,
+                      /*Text(_userLocation,
                           style: const TextStyle(
-                              color: Colors.grey, fontSize: 13)),
+                              color: Colors.grey, fontSize: 13)),*/
                     ],
                   ),
                   SizedBox(width: 16),
@@ -127,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "Hakkında",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: const Text("Hakkında bilgisi burada yer alacak."),
+              subtitle: Text(userProfile!.aboutMe),
               trailing: IconButton(
                 icon: const Icon(Icons.edit, color: Colors.blue),
                 onPressed: () {},
@@ -173,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               leading: const CircleAvatar(
                 backgroundImage: AssetImage('assets/profile.jpg'),
               ),
-              title: Text("$_userName",
+              title: Text(userProfile!.username,
                   style: TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(
                 "Bugünkü habere göre; Aile ve Sosyal Hizmetler Bakanlığı tarafından açıklamada, "
@@ -205,38 +231,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-
-            // İş deneyimi 1
-            ListTile(
-              title: const Text("Gümrük Müşaviri",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text(
-                  "A Firması - Tam Zamanlı\nEkim 2015 - Halen\nAnkara, Türkiye - Ofisten"),
-              trailing: IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blue),
-                onPressed: () {
-                  // İş deneyimi düzenleme işlevi
-                  _showEditExperienceDialog(context);
-                },
-              ),
+            Column(
+              children: userProfile!.jobExperiences.map((experience) {
+                return ListTile(
+                  title: Text(
+                    experience.jobTitle,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                      '${experience.companyName} - ${experience.workMode}\n${experience.startDate} - ${experience.endDate}\n${experience.city}'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () {
+                      /*
+                      _showEditExperienceDialog(
+                          context, experience); // deneyim düzenle*/
+                    },
+                  ),
+                );
+              }).toList(),
             ),
-
-            // İş deneyimi 2
-            ListTile(
-              title: const Text("Muhasebe Stajyeri",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text(
-                  "B Firması - Tam Zamanlı\nKasım 2012 - Aralık 2014\nAnkara, Türkiye - Ofisten"),
-              trailing: IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blue),
-                onPressed: () {
-                  // İş deneyimi düzenleme işlevi
-                  _showEditExperienceDialog(context);
-                },
-              ),
-            ),
-
-            const Divider(),
           ],
         ),
       ),
