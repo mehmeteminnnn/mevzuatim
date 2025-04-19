@@ -55,6 +55,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('MEVZUATIM',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal)),

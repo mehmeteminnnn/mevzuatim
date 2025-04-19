@@ -1,6 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart'
+    hide ImageSource;
+
+import 'package:image_picker/image_picker.dart';
 import 'package:mevzuatim/models/job_experience_model.dart';
 import 'package:mevzuatim/services/firestore_service.dart';
 import 'package:mevzuatim/services/profile_service.dart';
@@ -15,11 +20,51 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   UserProfile? userProfile;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  File? _selectedImage;
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
+  }
+
+// Fotoğraf seçme işlemi
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _updateProfileImage() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      final authId = currentUser.uid; // Auth ID alınıyor
+      if (_selectedImage != null) {
+        final isUpdated = await UserProfileService()
+            .updateProfileImage(authId, _selectedImage!);
+        if (isUpdated) {
+          // Resim başarıyla güncellendi
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Profil resmi güncellendi')),
+          );
+        } else {
+          // Hata durumunda
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Profil resmi güncellenemedi')),
+          );
+        }
+      }
+    } else {
+      // Kullanıcı oturum açmamış
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Kullanıcı oturum açmamış')),
+      );
+    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -123,16 +168,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Text(userProfile!.yetki,
                           style: const TextStyle(
                               color: Colors.grey, fontSize: 13)),
-                      /*Text(_userLocation,
+                      Text(userProfile!.expertise,
                           style: const TextStyle(
-                              color: Colors.grey, fontSize: 13)),*/
+                              color: Colors.grey, fontSize: 13)),
                     ],
                   ),
-                  SizedBox(width: 16),
+                  SizedBox(width: 12),
                   ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () async {
+                      // Fotoğraf seçme işlemi
+                      await _pickImage();
+                      if (_selectedImage != null) {
+                        // Resmi güncelleme işlemi
+                        await _updateProfileImage();
+                      }
+                    },
                     icon: const Icon(Icons.edit, size: 18),
-                    label: const Text("Profili Düzenle"),
+                    label: const Text("Profil Resmi Düzenle",
+                        style: TextStyle(fontSize: 10)),
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.blue,
                       backgroundColor: Colors.white,
@@ -156,56 +209,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
               subtitle: Text(userProfile!.aboutMe),
               trailing: IconButton(
                 icon: const Icon(Icons.edit, color: Colors.blue),
-                onPressed: () {},
+                onPressed: () {
+                  _showEditAboutDialog(context);
+                },
               ),
             ),
 
             const Divider(),
 
-            // Paylaşımlar
-            ListTile(
-              title: const Text(
-                "Paylaşımlar",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Text("1 paylaşım",
-                  style: TextStyle(color: Colors.blue)),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: Icon(Icons.add,
-                        size: 14, color: Colors.blue), // Daha küçük ikon
-                    label: Text("Yeni Gönderi",
-                        style: TextStyle(fontSize: 12, color: Colors.blue)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(
-                          vertical: 4, horizontal: 8), // Daha az padding
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                            6), // Daha az yuvarlatılmış köşeler
-                        side:
-                            BorderSide(color: Colors.blue), // Kenarlık eklendi
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future:
+                      FirestoreService().getBlogsByAuthor(userProfile!.mail),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return const Text("Bir hata oluştu.");
+                    } else {
+                      final paylasimlar = snapshot.data ?? [];
 
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundImage: AssetImage('assets/profile.jpg'),
-              ),
-              title: Text(userProfile!.username,
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(
-                "Bugünkü habere göre; Aile ve Sosyal Hizmetler Bakanlığı tarafından açıklamada, "
-                "16 yaş altı çocukların sosyal medya kullanımı sınırlandırılacak...",
-              ),
-              onTap: () {},
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ListTile(
+                            title: const Text(
+                              "Paylaşımlar",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              "${paylasimlar.length} paylaşım",
+                              style: const TextStyle(color: Colors.blue),
+                            ),
+                          ),
+                          if (paylasimlar.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16.0),
+                              child: Text(
+                                "Henüz paylaşım yapılmamış.",
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            )
+                          else
+                            ...paylasimlar.map((paylasim) => ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundImage:
+                                        NetworkImage(userProfile!.profileImage),
+                                  ),
+                                  title: Text(
+                                    userProfile!.username,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  subtitle: HtmlWidget(paylasim['icerik']),
+                                  onTap: () {},
+                                )),
+                        ],
+                      );
+                    }
+                  },
+                ),
+              ],
             ),
 
             const Divider(),
@@ -216,8 +282,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "İş Deneyimleri",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: const Text("2 iş deneyimi",
-                  style: TextStyle(color: Colors.blue)),
+              /* subtitle: const Text("2 iş deneyimi",
+                  style: TextStyle(color: Colors.blue)),*/
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -225,7 +291,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: const Icon(Icons.add, color: Colors.blue),
                     onPressed: () {
                       // İş deneyimi ekleme işlevi
-                      _showAddExperienceDialog(context);
+                      _showAddExperienceDialog2(context,
+                          flag: false); // Yeni iş deneyimi eklemek için
                     },
                   ),
                 ],
@@ -239,13 +306,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
-                      '${experience.companyName} - ${experience.workMode}\n${experience.startDate} - ${experience.endDate}\n${experience.city}'),
+                      '${experience.id}${experience.companyName} - ${experience.workMode}\n${experience.startDate} - ${experience.endDate ?? "Halen"}\n${experience.city}'),
                   trailing: IconButton(
                     icon: const Icon(Icons.edit, color: Colors.blue),
                     onPressed: () {
-                      /*
-                      _showEditExperienceDialog(
-                          context, experience); // deneyim düzenle*/
+                      _showAddExperienceDialog2(context,
+                          existingExperience: experience,
+                          id: experience.id.toString(),
+                          flag: false);
                     },
                   ),
                 );
@@ -468,6 +536,167 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         );
       },
+    );
+  }
+
+  void _showEditAboutDialog(BuildContext context) {
+    TextEditingController _aboutController =
+        TextEditingController(text: userProfile?.aboutMe ?? "");
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Hakkımda Bilgisi"),
+        content: TextField(
+          controller: _aboutController,
+          maxLines: 5,
+          decoration: const InputDecoration(
+            hintText: "Kendiniz hakkında bir şeyler yazın...",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("İptal"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newAbout = _aboutController.text.trim();
+              if (newAbout.isNotEmpty) {
+                final uid = FirebaseAuth.instance.currentUser!.uid;
+                final success =
+                    await UserProfileService().updateAboutMe(uid, newAbout);
+
+                if (success) {
+                  setState(() {
+                    userProfile = userProfile!.copyWith(aboutMe: newAbout);
+                  });
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Hakkımda bilgisi güncellendi")),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Güncelleme başarısız")),
+                  );
+                }
+              }
+            },
+            child: const Text("Kaydet"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddExperienceDialog2(BuildContext context,
+      {JobExperience? existingExperience, String? id, required bool flag}) {
+    final jobTitleController =
+        TextEditingController(text: existingExperience?.jobTitle ?? '');
+    final companyNameController =
+        TextEditingController(text: existingExperience?.companyName ?? '');
+    final employmentTypeController =
+        TextEditingController(text: existingExperience?.employmentType ?? '');
+    final startDateController =
+        TextEditingController(text: existingExperience?.startDate ?? '');
+    final endDateController =
+        TextEditingController(text: existingExperience?.endDate ?? '');
+    final cityController =
+        TextEditingController(text: existingExperience?.city ?? '');
+    final workModeController =
+        TextEditingController(text: existingExperience?.workMode ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(flag ? 'Deneyim' : 'Deneyimi Güncelle'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildTextField('İş Ünvanı', jobTitleController),
+                _buildTextField('Firma Adı', companyNameController),
+                _buildTextField('Çalışma Türü', employmentTypeController),
+                _buildTextField('Başlangıç Tarihi', startDateController,
+                    hint: 'yyyy-aa-gg'),
+                _buildTextField('Bitiş Tarihi (Opsiyonel)', endDateController,
+                    hint: 'yyyy-aa-gg'),
+                _buildTextField('Şehir', cityController),
+                _buildTextField('Çalışma Düzeni', workModeController),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () async {
+                    final uid = _auth.currentUser!.uid;
+                    final isSuccess =
+                        await UserProfileService().updateJobExperience(
+                      id: id ?? "",
+                      uid: uid,
+                      jobTitle: jobTitleController.text,
+                      companyName: companyNameController.text,
+                      employmentType: employmentTypeController.text,
+                      startDate: startDateController.text,
+                      endDate: endDateController.text,
+                      city: cityController.text,
+                      workMode: workModeController.text,
+                    );
+
+                    if (isSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                "İş deneyimi başarıyla ${flag ? 'eklendi' : 'güncellendi'}")),
+                      );
+                      Navigator.of(context).pop();
+                      _loadUserProfile(); // Listeyi güncelle
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("İşlem başarısız")),
+                      );
+                    }
+                  },
+                  child: Text(
+                    flag ? 'Kaydet' : 'Güncelle',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller,
+      {String? hint}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 14,
+            horizontal: 12,
+          ),
+        ),
+      ),
     );
   }
 }

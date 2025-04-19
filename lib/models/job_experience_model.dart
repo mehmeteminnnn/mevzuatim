@@ -71,4 +71,28 @@ class UserProfile {
           .toList(),
     );
   }
+
+  // CopyWith metodu
+  UserProfile copyWith({
+    String? username,
+    String? mail,
+    String? id,
+    String? yetki,
+    String? aboutMe,
+    String? expertise,
+    String? profileImage,
+    List<JobExperience>? jobExperiences,
+  }) {
+    return UserProfile(
+      username: username ?? this.username,
+      mail: mail ?? this.mail,
+      id: id ?? this.id,
+      yetki: yetki ?? this.yetki,
+      aboutMe: aboutMe ?? this.aboutMe,
+      expertise: expertise ?? this.expertise,
+      profileImage: profileImage ?? this.profileImage,
+      jobExperiences: jobExperiences ?? this.jobExperiences,
+    );
+  }
 }
+
