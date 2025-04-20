@@ -7,6 +7,7 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart'
 
 import 'package:image_picker/image_picker.dart';
 import 'package:mevzuatim/models/job_experience_model.dart';
+import 'package:mevzuatim/screens/login_screen.dart';
 import 'package:mevzuatim/services/firestore_service.dart';
 import 'package:mevzuatim/services/profile_service.dart';
 
@@ -25,7 +26,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showLoginAlertDialog(context);
+      });
+    } else {
+      _loadUserProfile();
+    }
+  }
+
+  void _showLoginAlertDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: const [
+              Icon(Icons.lock_outline, color: Colors.redAccent),
+              SizedBox(width: 8),
+              Text('Giriş Gerekli'),
+            ],
+          ),
+          content: const Text(
+            'Bu sayfayı görüntülemek için önce giriş yapmalısınız.',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Alert kapat
+                Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            LoginScreen())); // Giriş sayfasına yönlendir
+              },
+              child: const Text(
+                "Giriş Yap",
+                style: TextStyle(color: Colors.white),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
 // Fotoğraf seçme işlemi
@@ -282,8 +335,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "İş Deneyimleri",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              /* subtitle: const Text("2 iş deneyimi",
-                  style: TextStyle(color: Colors.blue)),*/
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -318,6 +369,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 );
               }).toList(),
+            ),
+
+            const Divider(),
+
+            // Çıkış Yap Butonu
+            Center(
+              child: ElevatedButton(
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text("Çıkış Yap"),
+              ),
             ),
           ],
         ),

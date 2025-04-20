@@ -41,6 +41,7 @@ class FirestoreService {
       QuerySnapshot snapshot = await _db
           .collection('blog')
           .where('manset', isEqualTo: mansetValue)
+          .orderBy('tarih', descending: true)
           .get();
 
       return snapshot.docs.map((doc) => BlogModel.fromFirestore(doc)).toList();

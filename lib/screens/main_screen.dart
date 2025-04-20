@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mevzuatim/screens/deneme.dart';
 import 'package:mevzuatim/screens/home_screen.dart';
 //import 'mevzuat_screen.dart';
 //import 'gtip_screen.dart';

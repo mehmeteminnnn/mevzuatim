@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mevzuatim/screens/kayit_olmadan_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mevzuatim/screens/main_screen.dart';
 import 'package:mevzuatim/services/auth_service.dart';
@@ -168,6 +169,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: const Text(
                   'Giriş Yap',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => KayitOlmadan(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                child: const Text(
+                  'Kayıt Olmadan Devam Et',
                   style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),

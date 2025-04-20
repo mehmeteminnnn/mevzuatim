@@ -190,12 +190,13 @@ class _GtipScreenState extends State<GtipScreen> {
                                                 horizontal: 2.0),
                                             child: Image.network(
                                               imageUrl,
-                                              width: 60,
-                                              height: 60,
+                                              width: 30,
+                                              height: 30,
                                               fit: BoxFit.cover,
                                               errorBuilder:
                                                   (context, error, stackTrace) {
-                                                return const Icon(Icons.error);
+                                                return const SizedBox
+                                                    .shrink(); // Hata olursa görünmez olur
                                               },
                                             ),
                                           );

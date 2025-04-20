@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mevzuatim/screens/home_screen.dart';
 import 'package:mevzuatim/screens/login_screen.dart';
 import 'main_screen.dart';
 
@@ -21,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) =>  LoginScreen()),
+      MaterialPageRoute(builder: (context) => MainScreen()),
     );
   }
 
